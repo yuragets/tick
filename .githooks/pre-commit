@@ -1,0 +1,63 @@
+#!/bin/sh
+#
+# pre-commit hook: block commits that introduce Cyrillic characters.
+#
+# The repository is English-only. This hook scans the STAGED content of
+# every added/copied/modified file for characters in the Cyrillic Unicode
+# block (U+0400..U+04FF) and aborts the commit if any are found.
+#
+# Only staged content is scanned (never the working tree or dependencies),
+# and binary files plus common vendored/lock paths are skipped.
+
+# Cyrillic detector, applied to a stream on stdin. Prints matching lines as
+# "<line-number>: <line-content>". `-CSD` decodes stdin as UTF-8 so the
+# character-class matches Unicode code points rather than raw bytes.
+scan() {
+	perl -CSD -ne 'print "    line $.: $_" if /[\x{0400}-\x{04FF}]/'
+}
+
+found=0
+
+# Read staged file paths one per line. `IFS=` and `read -r` keep spaces in
+# paths intact. --diff-filter=ACM: only Added, Copied, Modified (skip
+# deletions). Newlines inside file names are not supported (extremely rare).
+while IFS= read -r file; do
+	[ -n "$file" ] || continue
+	# Skip dependency, virtualenv and lock files.
+	case "$file" in
+	node_modules/* | */node_modules/*) continue ;;
+	.venv/* | */.venv/*) continue ;;
+	*.lock | *-lock.json | *-lock.yaml | *-lock.yml) continue ;;
+	package-lock.json | */package-lock.json) continue ;;
+	esac
+
+	# Skip binary files. `git diff --cached --numstat` prints "-" for the
+	# added/removed line counts of a binary blob.
+	numstat=$(git diff --cached --numstat -- "$file")
+	case "$numstat" in
+	"-"*) continue ;;
+	esac
+
+	# Scan the exact staged blob (":$file" is the staged version).
+	matches=$(git show ":$file" 2>/dev/null | scan)
+	if [ -n "$matches" ]; then
+		if [ "$found" -eq 0 ]; then
+			echo "Commit blocked: Cyrillic characters found in staged files." >&2
+			echo "This repository is English-only." >&2
+			echo >&2
+		fi
+		found=1
+		echo "  $file" >&2
+		echo "$matches" >&2
+	fi
+done <<EOF
+$(git diff --cached --name-only --diff-filter=ACM)
+EOF
+
+if [ "$found" -ne 0 ]; then
+	echo >&2
+	echo "Remove the Cyrillic characters and commit again." >&2
+	exit 1
+fi
+
+exit 0

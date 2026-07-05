@@ -1,0 +1,25 @@
+#!/bin/sh
+#
+# commit-msg hook: block commit messages that contain Cyrillic characters.
+#
+# Git passes the path to the file holding the proposed commit message as the
+# first argument. The repository is English-only, so any character in the
+# Cyrillic Unicode block (U+0400..U+04FF) aborts the commit.
+
+msg_file="$1"
+
+# `-CSD` decodes the file as UTF-8 so the character-class matches Unicode
+# code points. Prints offending lines as "<line-number>: <line-content>".
+matches=$(perl -CSD -ne 'print "    line $.: $_" if /[\x{0400}-\x{04FF}]/' "$msg_file")
+
+if [ -n "$matches" ]; then
+	echo "Commit blocked: Cyrillic characters found in the commit message." >&2
+	echo "This repository is English-only." >&2
+	echo >&2
+	echo "$matches" >&2
+	echo >&2
+	echo "Rewrite the message in English and commit again." >&2
+	exit 1
+fi
+
+exit 0

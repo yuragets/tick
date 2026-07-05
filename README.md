@@ -101,6 +101,19 @@ prompt. The old copy in the browser is left untouched as a safety net.
 - CORS is restricted to localhost origins
 - Import limits on file size and entry count
 
+## Contributing
+
+This repository is **English-only**. Git hooks in `.githooks/` reject any
+commit whose staged files or commit message contain Cyrillic characters
+(Unicode U+0400..U+04FF).
+
+The hooks are versioned in the repo, so after cloning on a new machine run
+this once to activate them:
+
+```bash
+git config core.hooksPath .githooks
+```
+
 ## Reference
 
 `tracker.html` — the original prototype (vanilla HTML/CSS/JS), kept for
