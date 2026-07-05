@@ -1,0 +1,69 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ── CSS custom properties ── */
+:root {
+  --bg: #f3f4f6;
+  --panel: #ffffff;
+  --panel-2: #f9fafb;
+  --line: #e5e7eb;
+  --line-strong: #d1d5db;
+  --ink: #111827;
+  --ink-dim: #4b5563;   /* was #6b7280 — AA secondary text on light bg */
+  --ink-mute: #636a77;  /* was #9ca3af — 2.2:1 → ~4.6:1, now readable */
+  --accent: #3b82f6;
+  --accent-bg: #eff6ff;
+  --danger: #ef4444;
+  --danger-bg: #fef2f2;
+  --ok: #10b981;
+  --radius: 10px;
+}
+
+.dark {
+  --bg: #16181d;
+  --panel: #1e2128;
+  --panel-2: #252a33;
+  --line: #2f3540;
+  --line-strong: #3d4552;
+  --ink: #e8eaed;
+  --ink-dim: #aab1bd;   /* was #9aa1ad — ~6.7:1, keeps hierarchy gap */
+  --ink-mute: #8b93a0;  /* was #646b78 — 2.7:1 → ~4.6:1 (AA) */
+  --accent: #6ea8fe;
+  --accent-bg: #1c2b45;
+  --danger: #e06a6a;
+  --danger-bg: #3a2020;
+  --ok: #5ec49a;
+}
+
+/* ── Global resets ── */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html, body, #root {
+  height: 100%;
+}
+
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  font-size: 15px;
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ── Scrollbar (webkit) ── */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--line-strong); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--ink-mute); }
+
+/* ── Focus ring ── */
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
