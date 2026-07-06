@@ -1,6 +1,7 @@
 import { useStore } from '../store/useStore'
 import { useT } from '../i18n'
 import type { Lang } from '../types'
+import Modal from './Modal'
 
 interface Props {
   onClose: () => void
@@ -11,16 +12,8 @@ export default function SettingsModal({ onClose }: Props) {
   const { t } = useT()
 
   return (
-    <div
-      className="fixed inset-0 flex items-center justify-center p-5 z-50"
-      style={{ background: 'rgba(0,0,0,.6)' }}
-      onClick={e => { if (e.target === e.currentTarget) onClose() }}
-    >
-      <div
-        className="w-full max-w-[400px] rounded-card p-6"
-        style={{ background: 'var(--panel)', border: '1px solid var(--line-strong)' }}
-      >
-        <h3 className="text-base font-semibold mb-4" style={{ color: 'var(--ink)' }}>
+    <Modal onClose={onClose} maxWidth={400}>
+      <h3 className="text-base font-semibold mb-4" style={{ color: 'var(--ink)' }}>
           {t('settings')}
         </h3>
 
@@ -82,7 +75,6 @@ export default function SettingsModal({ onClose }: Props) {
             {t('done')}
           </button>
         </div>
-      </div>
-    </div>
+    </Modal>
   )
 }

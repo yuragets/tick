@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react'
 import { useStore } from '../store/useStore'
 import { useTimer } from '../hooks/useTimer'
 import { parseTags } from '../utils/sanitize'
+import { MAX_DESC_LEN } from '../utils/constants'
+import { fieldStyle } from '../ui'
 import { useT } from '../i18n'
 
 export default function Timer() {
@@ -33,7 +35,7 @@ export default function Timer() {
       setDesc('')
       setTagsRaw('')
     } else {
-      startTimer(desc.trim().slice(0, 500), projId, parseTags(tagsRaw))
+      startTimer(desc.trim().slice(0, MAX_DESC_LEN), projId, parseTags(tagsRaw))
       setActiveProject(projId)
     }
   }
@@ -53,16 +55,12 @@ export default function Timer() {
         <input
           type="text"
           placeholder={t('descPlaceholder')}
-          maxLength={500}
+          maxLength={MAX_DESC_LEN}
           value={desc}
           onChange={e => setDesc(e.target.value)}
           disabled={!!running}
           className="flex-[2] min-w-[170px] px-3 py-2.5 rounded-[10px] text-sm transition-colors"
-          style={{
-            background: 'var(--panel-2)',
-            border: '1px solid var(--line)',
-            color: 'var(--ink)',
-          }}
+          style={fieldStyle}
         />
         <select
           value={projId}
@@ -90,11 +88,7 @@ export default function Timer() {
           onChange={e => setTagsRaw(e.target.value)}
           disabled={!!running}
           className="w-full px-3 py-2.5 rounded-[10px] text-sm transition-colors"
-          style={{
-            background: 'var(--panel-2)',
-            border: '1px solid var(--line)',
-            color: 'var(--ink)',
-          }}
+          style={fieldStyle}
         />
       </div>
 

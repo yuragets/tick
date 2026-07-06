@@ -1,7 +1,8 @@
-import { useState, useRef, useEffect } from 'react'
+import { useState } from 'react'
 import { useStore } from '../store/useStore'
 import { projectColor, projectName } from '../utils/projects'
 import { hms, fmtDateTime } from '../utils/time'
+import { useConfirm } from '../hooks/useConfirm'
 import { useT } from '../i18n'
 
 // Global modal state — shared via module-level setter
@@ -15,23 +16,10 @@ export default function EntryList() {
   const [filterProject, setFilterProject] = useState<string>('all')
   const [filterTag, setFilterTag] = useState('')
   // Two-click delete confirmation to avoid accidental removals.
-  const [confirmId, setConfirmId] = useState<string | null>(null)
-  const confirmTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
-
-  useEffect(() => () => {
-    if (confirmTimer.current) clearTimeout(confirmTimer.current)
-  }, [])
+  const { confirm, isArmed } = useConfirm()
 
   function handleDelete(id: string) {
-    if (confirmId === id) {
-      if (confirmTimer.current) clearTimeout(confirmTimer.current)
-      setConfirmId(null)
-      deleteEntry(id)
-    } else {
-      setConfirmId(id)
-      if (confirmTimer.current) clearTimeout(confirmTimer.current)
-      confirmTimer.current = setTimeout(() => setConfirmId(null), 3000)
-    }
+    if (confirm(id)) deleteEntry(id)
   }
 
   // Collect all unique tags
@@ -177,13 +165,13 @@ export default function EntryList() {
                     onClick={() => handleDelete(e.id)}
                     className="text-sm px-1.5 py-1 rounded transition-colors"
                     style={{
-                      background: confirmId === e.id ? 'var(--danger-bg)' : 'transparent',
+                      background: isArmed(e.id) ? 'var(--danger-bg)' : 'transparent',
                       border: 'none',
-                      color: confirmId === e.id ? 'var(--danger)' : 'var(--ink-mute)',
+                      color: isArmed(e.id) ? 'var(--danger)' : 'var(--ink-mute)',
                     }}
-                    title={confirmId === e.id ? t('confirmDeleteHint') : t('delete')}
+                    title={isArmed(e.id) ? t('confirmDeleteHint') : t('delete')}
                   >
-                    {confirmId === e.id ? '✓' : '✕'}
+                    {isArmed(e.id) ? '✓' : '✕'}
                   </button>
                 </li>
               )

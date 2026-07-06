@@ -2,8 +2,11 @@ import { useState, useEffect } from 'react'
 import { useStore } from '../store/useStore'
 import { dtLocal, parseDatetimeLocal } from '../utils/time'
 import { parseTags } from '../utils/sanitize'
+import { MAX_DESC_LEN } from '../utils/constants'
+import { fieldStyle } from '../ui'
 import { useT } from '../i18n'
 import { registerEditOpener } from './EntryList'
+import Modal from './Modal'
 
 export default function EntryEditModal() {
   const { entries, projects, updateEntry } = useStore()
@@ -37,7 +40,7 @@ export default function EntryEditModal() {
     if (!start || !end || end <= start) return
 
     updateEntry(editId, {
-      desc: desc.trim().slice(0, 500),
+      desc: desc.trim().slice(0, MAX_DESC_LEN),
       projectId,
       tags: parseTags(tagsRaw),
       start,
@@ -53,18 +56,7 @@ export default function EntryEditModal() {
   if (!editId) return null
 
   return (
-    <div
-      className="fixed inset-0 flex items-center justify-center p-5 z-50"
-      style={{ background: 'rgba(0,0,0,.6)' }}
-      onClick={e => { if (e.target === e.currentTarget) handleClose() }}
-    >
-      <div
-        className="w-full max-w-[480px] rounded-card p-6 overflow-hidden"
-        style={{
-          background: 'var(--panel)',
-          border: '1px solid var(--line-strong)',
-        }}
-      >
+    <Modal onClose={handleClose} maxWidth={480} className="overflow-hidden">
         <h3 className="text-base font-semibold mb-4" style={{ color: 'var(--ink)' }}>
           {t('editEntry')}
         </h3>
@@ -74,15 +66,11 @@ export default function EntryEditModal() {
           <label className="block text-xs mb-1" style={{ color: 'var(--ink-mute)' }}>{t('description')}</label>
           <input
             type="text"
-            maxLength={500}
+            maxLength={MAX_DESC_LEN}
             value={desc}
             onChange={e => setDesc(e.target.value)}
             className="w-full px-3 py-2 rounded-[10px] text-sm"
-            style={{
-              background: 'var(--panel-2)',
-              border: '1px solid var(--line)',
-              color: 'var(--ink)',
-            }}
+            style={fieldStyle}
           />
         </div>
 
@@ -115,11 +103,7 @@ export default function EntryEditModal() {
             value={tagsRaw}
             onChange={e => setTagsRaw(e.target.value)}
             className="w-full px-3 py-2 rounded-[10px] text-sm"
-            style={{
-              background: 'var(--panel-2)',
-              border: '1px solid var(--line)',
-              color: 'var(--ink)',
-            }}
+            style={fieldStyle}
           />
         </div>
 
@@ -132,11 +116,7 @@ export default function EntryEditModal() {
               value={startStr}
               onChange={e => setStartStr(e.target.value)}
               className="w-full px-3 py-2 rounded-[10px] text-sm"
-              style={{
-                background: 'var(--panel-2)',
-                border: '1px solid var(--line)',
-                color: 'var(--ink)',
-              }}
+              style={fieldStyle}
             />
           </div>
           <div className="flex-1 min-w-[180px]">
@@ -146,11 +126,7 @@ export default function EntryEditModal() {
               value={endStr}
               onChange={e => setEndStr(e.target.value)}
               className="w-full px-3 py-2 rounded-[10px] text-sm"
-              style={{
-                background: 'var(--panel-2)',
-                border: '1px solid var(--line)',
-                color: 'var(--ink)',
-              }}
+              style={fieldStyle}
             />
           </div>
         </div>
@@ -180,7 +156,6 @@ export default function EntryEditModal() {
             {t('save')}
           </button>
         </div>
-      </div>
-    </div>
+    </Modal>
   )
 }

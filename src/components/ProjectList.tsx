@@ -1,6 +1,8 @@
 import { useState, useRef } from 'react'
 import { useStore } from '../store/useStore'
 import { projectColor } from '../utils/projects'
+import { MAX_NAME_LEN } from '../utils/constants'
+import { fieldStyle } from '../ui'
 import { useT } from '../i18n'
 import ProjectEditModal from './ProjectEditModal'
 
@@ -12,7 +14,7 @@ export default function ProjectList() {
   const inputRef = useRef<HTMLInputElement>(null)
 
   function handleAdd() {
-    const name = newName.trim().slice(0, 100)
+    const name = newName.trim().slice(0, MAX_NAME_LEN)
     if (!name) return
     addProject(name)
     setNewName('')
@@ -45,17 +47,12 @@ export default function ProjectList() {
               ref={inputRef}
               type="text"
               placeholder={t('newProjectPlaceholder')}
-              maxLength={100}
+              maxLength={MAX_NAME_LEN}
               value={newName}
               onChange={e => setNewName(e.target.value)}
               onKeyDown={e => { if (e.key === 'Enter') handleAdd() }}
               className="px-2.5 py-1.5 text-sm rounded-[10px]"
-              style={{
-                width: 150,
-                background: 'var(--panel-2)',
-                border: '1px solid var(--line)',
-                color: 'var(--ink)',
-              }}
+              style={{ ...fieldStyle, width: 150 }}
             />
             <button
               onClick={handleAdd}

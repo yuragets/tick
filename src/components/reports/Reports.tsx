@@ -3,6 +3,7 @@ import { useStore } from '../../store/useStore'
 import { rangeBounds, fmtDate } from '../../utils/time'
 import { projectColor, projectName } from '../../utils/projects'
 import { exportCSV, importFile } from '../../utils/csv'
+import { fieldStyle } from '../../ui'
 import { useT } from '../../i18n'
 import type { ChartMode, ReportRange, CustomRange } from '../../types'
 import StatsCards from './StatsCards'
@@ -157,13 +158,13 @@ export default function Reports() {
           <input type="date" value={custom.from}
             onChange={e => setCustom(c => ({ ...c, from: e.target.value }))}
             className="flex-1 px-3 py-2 text-sm rounded-[10px]"
-            style={{ background: 'var(--panel-2)', border: '1px solid var(--line)', color: 'var(--ink)' }}
+            style={fieldStyle}
           />
           <span style={{ color: 'var(--ink-mute)' }}>→</span>
           <input type="date" value={custom.to}
             onChange={e => setCustom(c => ({ ...c, to: e.target.value }))}
             className="flex-1 px-3 py-2 text-sm rounded-[10px]"
-            style={{ background: 'var(--panel-2)', border: '1px solid var(--line)', color: 'var(--ink)' }}
+            style={fieldStyle}
           />
         </div>
       )}

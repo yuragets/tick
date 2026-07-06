@@ -1,7 +1,10 @@
 import { useState } from 'react'
 import { useStore } from '../store/useStore'
-import { PALETTE } from '../utils/constants'
+import { PALETTE, MAX_NAME_LEN } from '../utils/constants'
+import { fieldStyle } from '../ui'
+import { useConfirm } from '../hooks/useConfirm'
 import { useT } from '../i18n'
+import Modal from './Modal'
 
 interface Props {
   projectId: string
@@ -15,22 +18,19 @@ export default function ProjectEditModal({ projectId, onClose }: Props) {
 
   const [name, setName] = useState(project?.name ?? '')
   const [color, setColor] = useState(project?.color ?? PALETTE[projects.findIndex(p => p.id === projectId) % PALETTE.length] ?? PALETTE[0]!)
-  const [confirmDelete, setConfirmDelete] = useState(false)
+  const { confirm, isArmed } = useConfirm()
 
   if (!project) return null
 
   function handleSave() {
-    const trimmed = name.trim().slice(0, 100)
+    const trimmed = name.trim().slice(0, MAX_NAME_LEN)
     if (!trimmed) return
     updateProject(projectId, { name: trimmed, color })
     onClose()
   }
 
   function handleDelete() {
-    if (!confirmDelete) {
-      setConfirmDelete(true)
-      return
-    }
+    if (!confirm('delete')) return
     if (activeProjectId === projectId) {
       const next = projects.find(p => p.id !== projectId)
       if (next) setActiveProject(next.id)
@@ -42,15 +42,7 @@ export default function ProjectEditModal({ projectId, onClose }: Props) {
   const canDelete = projects.length > 1
 
   return (
-    <div
-      className="fixed inset-0 flex items-center justify-center p-5 z-50"
-      style={{ background: 'rgba(0,0,0,.6)' }}
-      onClick={e => { if (e.target === e.currentTarget) onClose() }}
-    >
-      <div
-        className="w-full max-w-[380px] rounded-card p-6"
-        style={{ background: 'var(--panel)', border: '1px solid var(--line-strong)' }}
-      >
+    <Modal onClose={onClose} maxWidth={380}>
         <h3 className="text-base font-semibold mb-4" style={{ color: 'var(--ink)' }}>
           {t('project')}
         </h3>
@@ -62,12 +54,12 @@ export default function ProjectEditModal({ projectId, onClose }: Props) {
           </label>
           <input
             type="text"
-            maxLength={100}
+            maxLength={MAX_NAME_LEN}
             value={name}
             onChange={e => setName(e.target.value)}
             onKeyDown={e => { if (e.key === 'Enter') handleSave() }}
             className="w-full px-3 py-2 rounded-[10px] text-sm"
-            style={{ background: 'var(--panel-2)', border: '1px solid var(--line)', color: 'var(--ink)' }}
+            style={fieldStyle}
             autoFocus
           />
         </div>
@@ -124,12 +116,12 @@ export default function ProjectEditModal({ projectId, onClose }: Props) {
             <button
               onClick={handleDelete}
               className="px-3 py-2 text-sm rounded-[10px] border transition-all mr-auto"
-              style={confirmDelete
+              style={isArmed('delete')
                 ? { background: 'var(--danger)', borderColor: 'var(--danger)', color: '#fff' }
                 : { background: 'var(--danger-bg)', borderColor: 'var(--danger)', color: 'var(--danger)' }
               }
             >
-              {confirmDelete ? t('confirmDelete') : t('delete')}
+              {isArmed('delete') ? t('confirmDelete') : t('delete')}
             </button>
           )}
           <button
@@ -148,12 +140,11 @@ export default function ProjectEditModal({ projectId, onClose }: Props) {
           </button>
         </div>
 
-        {confirmDelete && (
+        {isArmed('delete') && (
           <p className="text-xs mt-2 text-right" style={{ color: 'var(--ink-mute)' }}>
             {t('confirmDeleteHint')}
           </p>
         )}
-      </div>
-    </div>
+    </Modal>
   )
 }
