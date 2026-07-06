@@ -1,11 +1,9 @@
 import type { Entry, Project } from '../types'
 import { AppDataSchema } from '../schemas'
 import { sanitizeCsvCell } from './sanitize'
-import { IMPORT_MAX_BYTES, IMPORT_MAX_ENTRIES } from './constants'
+import { projectName } from './projects'
+import { IMPORT_MAX_BYTES, IMPORT_MAX_ENTRIES, MAX_DESC_LEN, MAX_NAME_LEN, MAX_TAGS } from './constants'
 import { t } from '../i18n'
-
-const pName = (projects: Project[], id: string) =>
-  projects.find(p => p.id === id)?.name ?? '—'
 
 // day/month/year, zero-padded (e.g. 06/07/2026)
 function fmtDMY(ms: number): string {
@@ -49,7 +47,7 @@ export function exportCSV(entries: Entry[], projects: Project[], rangeLabel: str
   }
 
   const rows = [...groups.values()].sort((a, b) => a.start - b.start).map(g => [
-    quoteCell(pName(projects, g.projectId)),
+    quoteCell(projectName(projects, g.projectId)),
     quoteCell((g.ms / 3_600_000).toFixed(2)),
     quoteCell(fmtDMY(g.start)),
     quoteCell([...g.tags].join('; ')),
@@ -143,17 +141,17 @@ function importCSV(text: string): ImportResult {
     const start = new Date(yyyy, mm - 1, dd).getTime()
     const end = start + Math.round(hours * 3_600_000)
 
-    const pName = (projName ?? '').slice(0, 100)
-    if (!projectMap.has(pName)) {
-      projectMap.set(pName, { id: 'p' + Date.now() + projectMap.size, name: pName })
+    const cleanName = (projName ?? '').slice(0, MAX_NAME_LEN)
+    if (!projectMap.has(cleanName)) {
+      projectMap.set(cleanName, { id: 'p' + Date.now() + projectMap.size, name: cleanName })
     }
-    const proj = projectMap.get(pName)!
+    const proj = projectMap.get(cleanName)!
 
     entries.push({
       id: 'e' + Date.now() + i,
-      desc: (desc ?? '').slice(0, 500),
+      desc: (desc ?? '').slice(0, MAX_DESC_LEN),
       projectId: proj.id,
-      tags: (tagsRaw ?? '').split(';').map(t => t.trim()).filter(Boolean).slice(0, 20),
+      tags: (tagsRaw ?? '').split(';').map(t => t.trim()).filter(Boolean).slice(0, MAX_TAGS),
       start,
       end,
     })

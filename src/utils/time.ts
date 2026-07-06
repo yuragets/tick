@@ -12,8 +12,8 @@ export function hm(ms: number): string {
   return `${Math.floor(m / 60)}${t('unitHour')} ${m % 60}${t('unitMinute')}`
 }
 
-export function dtLocal(t: number): string {
-  const d = new Date(t - new Date().getTimezoneOffset() * 60_000)
+export function dtLocal(ms: number): string {
+  const d = new Date(ms - new Date().getTimezoneOffset() * 60_000)
   return d.toISOString().slice(0, 16)
 }
 

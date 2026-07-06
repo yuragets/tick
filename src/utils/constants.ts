@@ -11,7 +11,13 @@ export const PALETTE = [
 export const STORAGE_KEY = 'chronos-v1'
 export const IMPORT_MAX_BYTES = 5 * 1024 * 1024   // 5 MB
 export const IMPORT_MAX_ENTRIES = 10_000
-export const IMPORT_MAX_STR_LEN = 500
+
+// Input length limits — enforced in the UI (maxLength / slice) and mirrored
+// by the Zod schemas that validate stored / imported data.
+export const MAX_DESC_LEN = 500
+export const MAX_NAME_LEN = 100
+export const MAX_TAG_LEN = 100
+export const MAX_TAGS = 20
 
 import type { Settings } from '../types'
 
