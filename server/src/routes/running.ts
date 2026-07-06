@@ -1,6 +1,7 @@
 import { Router } from 'express'
 import * as db from '../db.js'
 import { RunningTimerSchema } from '../schemas.js'
+import { badRequest } from '../http.js'
 
 export const runningRouter = Router()
 
@@ -12,9 +13,7 @@ runningRouter.get('/', (_req, res) => {
 // PUT /api/running → set the active timer
 runningRouter.put('/', (req, res) => {
   const parsed = RunningTimerSchema.safeParse(req.body)
-  if (!parsed.success) {
-    return res.status(400).json({ error: parsed.error.issues[0]?.message ?? 'Invalid running timer' })
-  }
+  if (!parsed.success) return badRequest(res, parsed.error, 'Invalid running timer')
   res.json(db.setRunning(parsed.data))
 })
 

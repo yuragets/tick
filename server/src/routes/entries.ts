@@ -1,6 +1,7 @@
 import { Router } from 'express'
 import * as db from '../db.js'
 import { EntrySchema, EntryPatchSchema } from '../schemas.js'
+import { badRequest } from '../http.js'
 
 export const entriesRouter = Router()
 
@@ -12,9 +13,7 @@ entriesRouter.get('/', (_req, res) => {
 // POST /api/entries
 entriesRouter.post('/', (req, res) => {
   const parsed = EntrySchema.safeParse(req.body)
-  if (!parsed.success) {
-    return res.status(400).json({ error: parsed.error.issues[0]?.message ?? 'Invalid entry' })
-  }
+  if (!parsed.success) return badRequest(res, parsed.error, 'Invalid entry')
   if (db.getEntry(parsed.data.id)) {
     return res.status(409).json({ error: 'Entry id already exists' })
   }
@@ -24,9 +23,7 @@ entriesRouter.post('/', (req, res) => {
 // PUT /api/entries/:id
 entriesRouter.put('/:id', (req, res) => {
   const parsed = EntryPatchSchema.safeParse(req.body)
-  if (!parsed.success) {
-    return res.status(400).json({ error: parsed.error.issues[0]?.message ?? 'Invalid patch' })
-  }
+  if (!parsed.success) return badRequest(res, parsed.error, 'Invalid patch')
   // Guard against inverted time ranges when both bounds are supplied.
   const existing = db.getEntry(req.params.id)
   if (!existing) return res.status(404).json({ error: 'Entry not found' })
