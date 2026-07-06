@@ -1,6 +1,6 @@
-import { useState, useMemo } from 'react'
+import { useMemo } from 'react'
 import { useStore } from '../../store/useStore'
-import { projectColor } from '../../utils/projects'
+import { projectColor, projectName } from '../../utils/projects'
 import { hm } from '../../utils/time'
 import { useT, monthName, weekdaysMon } from '../../i18n'
 
@@ -54,17 +54,27 @@ function cellBackground(
   return `linear-gradient(135deg, ${stops.join(', ')})`
 }
 
-export default function CalendarView() {
+interface CalendarViewProps {
+  viewDate: Date
+  onViewDateChange: (d: Date) => void
+  filterProject: string
+  onFilterProjectChange: (p: string) => void
+}
+
+export default function CalendarView({
+  viewDate,
+  onViewDateChange,
+  filterProject,
+  onFilterProjectChange,
+}: CalendarViewProps) {
   const { entries, projects, settings } = useStore()
   const { t, locale } = useT()
   const showDescriptions = settings.showDescriptions
   const weekdays = weekdaysMon(locale)
 
   const today = new Date()
-  const [viewDate, setViewDate] = useState(
-    new Date(today.getFullYear(), today.getMonth(), 1)
-  )
-  const [filterProject, setFilterProject] = useState<string>('all')
+  const setViewDate = onViewDateChange
+  const setFilterProject = onFilterProjectChange
 
   const year = viewDate.getFullYear()
   const month = viewDate.getMonth()
@@ -108,17 +118,21 @@ export default function CalendarView() {
     return map
   }, [dayProjMap])
 
-  // Max ms in current month for intensity scaling
+  // Max ms in current month for intensity scaling.
+  // Scale by the busiest day across ALL projects (ignoring the current
+  // filter) so a given day keeps the same shade whether the calendar shows
+  // all projects or a single one.
   const maxMs = useMemo(() => {
-    let max = 0
-    const daysInMonth = new Date(year, month + 1, 0).getDate()
-    for (let d = 1; d <= daysInMonth; d++) {
-      const key = `${monthPrefix}-${String(d).padStart(2, '0')}`
-      const ms = dayTotalMap.get(key) ?? 0
-      if (ms > max) max = ms
+    const totals = new Map<string, number>()
+    for (const e of entries) {
+      const key = dayKey(new Date(e.start))
+      if (!key.startsWith(monthPrefix)) continue
+      totals.set(key, (totals.get(key) ?? 0) + (e.end - e.start))
     }
+    let max = 0
+    totals.forEach(ms => { if (ms > max) max = ms })
     return max
-  }, [dayTotalMap, monthPrefix, year, month])
+  }, [entries, monthPrefix])
 
   // Calendar grid (Mon-first)
   const gridDays = useMemo(() => {
@@ -144,6 +158,22 @@ export default function CalendarView() {
     })
     return total
   }, [dayTotalMap, monthPrefix])
+
+  // Projects that appear in the current month → legend (color + name)
+  const monthProjects = useMemo(() => {
+    const ids = new Set<string>()
+    dayProjMap.forEach((projData, key) => {
+      if (!key.startsWith(monthPrefix)) return
+      projData.forEach((_ms, pid) => ids.add(pid))
+    })
+    return Array.from(ids)
+      .map(pid => ({
+        id: pid,
+        name: projectName(projects, pid),
+        color: projectColor(projects, pid),
+      }))
+      .sort((a, b) => a.name.localeCompare(b.name))
+  }, [dayProjMap, monthPrefix, projects])
 
   return (
     <div>
@@ -173,8 +203,8 @@ export default function CalendarView() {
         <select
           value={filterProject}
           onChange={e => setFilterProject(e.target.value)}
-          className="px-2.5 py-1.5 text-sm rounded-[10px]"
-          style={{ background: 'var(--panel-2)', border: '1px solid var(--line)', color: 'var(--ink)' }}
+          className="select px-2.5 py-1.5 text-sm rounded-[10px]"
+          style={{ backgroundColor: 'var(--panel-2)', border: '1px solid var(--line)', color: 'var(--ink)' }}
         >
           <option value="all">{t('allProjects')}</option>
           {projects.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
@@ -193,7 +223,7 @@ export default function CalendarView() {
       {/* Grid */}
       <div className="grid grid-cols-7 gap-1">
         {gridDays.map((day, i) => {
-          if (!day) return <div key={`e-${i}`} style={{ aspectRatio: '1/1.1' }} />
+          if (!day) return <div key={`e-${i}`} style={{ minHeight: 120 }} />
 
           const key = dayKey(day)
           const totalMs = dayTotalMap.get(key) ?? 0
@@ -221,15 +251,21 @@ export default function CalendarView() {
             : 'var(--accent)'
 
           const descs = dayDescMap.get(key) ?? []
+          // Join all entries of the day into one flowing text and cut it to
+          // what fits the cell (~120px wide, ~5 lines) instead of clipping.
+          const fullDesc = descs.join(' · ')
+          const MAX_DESC_CHARS = 90
+          const shownDesc = fullDesc.length > MAX_DESC_CHARS
+            ? fullDesc.slice(0, MAX_DESC_CHARS).trimEnd() + '…'
+            : fullDesc
 
           return (
             <div
               key={key}
-              className="rounded-lg p-1.5 flex flex-col justify-between gap-1"
+              className="rounded-lg p-2 flex flex-col justify-between gap-1 overflow-hidden"
               style={{
-                // Let cells grow to fit descriptions; fixed square otherwise.
-                aspectRatio: showDescriptions ? undefined : '1/1.1',
-                minHeight: showDescriptions ? 76 : 56,
+                // Each cell is at least 120×120; grows taller if needed.
+                minHeight: 120,
                 background: bg,
                 border: isToday ? `2px solid ${dominantColor}` : '1px solid var(--line)',
               }}
@@ -248,24 +284,15 @@ export default function CalendarView() {
                 {day.getDate()}
               </span>
 
-              {/* Descriptions (when enabled) */}
-              {showDescriptions && descs.length > 0 && (
-                <div className="flex-1 min-h-0 space-y-0.5">
-                  {descs.slice(0, 3).map((d, idx) => (
-                    <div
-                      key={idx}
-                      className="text-[10px] leading-tight break-words"
-                      style={{ color: textOnBg ? 'var(--ink)' : 'var(--ink-dim)' }}
-                      title={d}
-                    >
-                      {d}
-                    </div>
-                  ))}
-                  {descs.length > 3 && (
-                    <div className="text-[10px] leading-tight" style={{ color: 'var(--ink-mute)' }}>
-                      +{descs.length - 3}
-                    </div>
-                  )}
+              {/* Descriptions: only when a single project is tracked that day.
+                  With 2+ projects the day shows color dots instead (below). */}
+              {showDescriptions && shownDesc && projData.size === 1 && (
+                <div
+                  className="flex-1 min-h-0 overflow-hidden text-[11px] leading-tight break-words line-clamp-5"
+                  style={{ color: textOnBg ? 'var(--ink)' : 'var(--ink-dim)' }}
+                  title={fullDesc}
+                >
+                  {shownDesc}
                 </div>
               )}
 
@@ -293,6 +320,22 @@ export default function CalendarView() {
           )
         })}
       </div>
+
+      {/* Legend: project color + name for this month */}
+      {monthProjects.length > 0 && (
+        <div className="flex flex-wrap gap-x-4 gap-y-1.5 mt-4">
+          {monthProjects.map(p => (
+            <div
+              key={p.id}
+              className="flex items-center gap-1.5 text-xs"
+              style={{ color: 'var(--ink-dim)' }}
+            >
+              <span className="w-2.5 h-2.5 rounded-full flex-none" style={{ background: p.color }} />
+              {p.name}
+            </div>
+          ))}
+        </div>
+      )}
 
       {/* Month total */}
       {monthTotal > 0 && (

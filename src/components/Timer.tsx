@@ -68,9 +68,9 @@ export default function Timer() {
           value={projId}
           onChange={e => handleProjChange(e.target.value)}
           disabled={!!running}
-          className="flex-1 min-w-[140px] px-3 py-2.5 rounded-[10px] text-sm transition-colors"
+          className="select flex-1 min-w-[140px] px-3 py-2.5 rounded-[10px] text-sm transition-colors"
           style={{
-            background: 'var(--panel-2)',
+            backgroundColor: 'var(--panel-2)',
             border: '1px solid var(--line)',
             color: 'var(--ink)',
           }}

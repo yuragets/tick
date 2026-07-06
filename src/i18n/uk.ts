@@ -95,6 +95,7 @@ const uk: Dict = {
   csvColTags: 'Теги',
   csvColStart: 'Початок',
   csvColEnd: 'Кінець',
+  csvColDate: 'Дата',
   csvColHours: 'Години',
   importFileTooBig: 'Файл завеликий (максимум {mb} МБ)',
   importUnsupported: 'Підтримуються лише файли .json та .csv',

@@ -32,8 +32,8 @@ export default function SettingsModal({ onClose }: Props) {
           <select
             value={settings.lang}
             onChange={e => setLang(e.target.value as Lang)}
-            className="px-2.5 py-1.5 text-sm rounded-[10px]"
-            style={{ background: 'var(--panel-2)', border: '1px solid var(--line)', color: 'var(--ink)' }}
+            className="select px-2.5 py-1.5 text-sm rounded-[10px]"
+            style={{ backgroundColor: 'var(--panel-2)', border: '1px solid var(--line)', color: 'var(--ink)' }}
           >
             <option value="en">English</option>
             <option value="uk">Українська</option>

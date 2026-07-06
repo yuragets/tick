@@ -67,3 +67,19 @@ body {
   outline: 2px solid var(--accent);
   outline-offset: 2px;
 }
+
+/* ── Select chevron ──
+   Native selects push the arrow to the far right edge. Replace it with a
+   custom chevron inset from the edge, consistent across browsers/themes.
+   Selects using this class must set backgroundColor (not the `background`
+   shorthand) so this background-image is not overridden. */
+select.select {
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12' fill='none' stroke='%239aa1ad' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M2.5 4.5 6 8l3.5-3.5'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.7rem center;
+  background-size: 12px;
+  padding-right: 1.9rem;
+}

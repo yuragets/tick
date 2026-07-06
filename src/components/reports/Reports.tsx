@@ -20,6 +20,10 @@ export default function Reports() {
   const [custom, setCustom] = useState<CustomRange>({ from: '', to: '' })
   const [chartMode, setChartMode] = useState<ChartMode>('proj')
   const [filterProject, setFilterProject] = useState<string>('all')
+  // Calendar state lives here so CSV export can follow the visible month.
+  const now = new Date()
+  const [calMonth, setCalMonth] = useState(new Date(now.getFullYear(), now.getMonth(), 1))
+  const [calProject, setCalProject] = useState<string>('all')
   const [importError, setImportError] = useState<string | null>(null)
   const [importSuccess, setImportSuccess] = useState<string | null>(null)
   const fileRef = useRef<HTMLInputElement>(null)
@@ -113,6 +117,19 @@ export default function Reports() {
   const rangeLabel = range === 'custom' ? 'custom' : range
   const isCalendar = chartMode === 'calendar'
 
+  // In calendar mode the range selector is hidden, so export follows the
+  // month + project shown in the calendar rather than the (unused) range.
+  const calFrom = new Date(calMonth.getFullYear(), calMonth.getMonth(), 1).getTime()
+  const calTo = new Date(calMonth.getFullYear(), calMonth.getMonth() + 1, 0, 23, 59, 59, 999).getTime()
+  const calEntries = entries.filter(e =>
+    e.start >= calFrom && e.start <= calTo &&
+    (calProject === 'all' || e.projectId === calProject)
+  )
+  const calLabel = `${calMonth.getFullYear()}-${String(calMonth.getMonth() + 1).padStart(2, '0')}`
+
+  const exportEntries = isCalendar ? calEntries : filtered
+  const exportLabel = isCalendar ? calLabel : rangeLabel
+
   return (
     <div>
       {/* ── Range selector ── */}
@@ -190,9 +207,9 @@ export default function Reports() {
             <select
               value={filterProject}
               onChange={e => setFilterProject(e.target.value)}
-              className="px-2.5 py-1.5 text-sm rounded-[10px]"
+              className="select px-2.5 py-1.5 text-sm rounded-[10px]"
               style={{
-                background: 'var(--panel-2)',
+                backgroundColor: 'var(--panel-2)',
                 border: '1px solid var(--line)',
                 color: filterProject === 'all' ? 'var(--ink-dim)' : 'var(--ink)',
               }}
@@ -212,7 +229,7 @@ export default function Reports() {
 
           {/* Export */}
           <button
-            onClick={() => exportCSV(filtered, projects, rangeLabel)}
+            onClick={() => exportCSV(exportEntries, projects, exportLabel)}
             className="text-sm"
             style={{ background: 'transparent', border: 'none', color: 'var(--accent)', padding: '0' }}
           >
@@ -236,7 +253,14 @@ export default function Reports() {
       )}
 
       {/* ── Calendar ── */}
-      {isCalendar && <CalendarView />}
+      {isCalendar && (
+        <CalendarView
+          viewDate={calMonth}
+          onViewDateChange={setCalMonth}
+          filterProject={calProject}
+          onFilterProjectChange={setCalProject}
+        />
+      )}
 
       {/* ── Proj chart ── */}
       {chartMode === 'proj' && (

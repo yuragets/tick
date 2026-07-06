@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { useStore } from '../store/useStore'
 import { projectColor, projectName } from '../utils/projects'
 import { hms, fmtDateTime } from '../utils/time'
@@ -14,6 +14,25 @@ export default function EntryList() {
   const { t } = useT()
   const [filterProject, setFilterProject] = useState<string>('all')
   const [filterTag, setFilterTag] = useState('')
+  // Two-click delete confirmation to avoid accidental removals.
+  const [confirmId, setConfirmId] = useState<string | null>(null)
+  const confirmTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  useEffect(() => () => {
+    if (confirmTimer.current) clearTimeout(confirmTimer.current)
+  }, [])
+
+  function handleDelete(id: string) {
+    if (confirmId === id) {
+      if (confirmTimer.current) clearTimeout(confirmTimer.current)
+      setConfirmId(null)
+      deleteEntry(id)
+    } else {
+      setConfirmId(id)
+      if (confirmTimer.current) clearTimeout(confirmTimer.current)
+      confirmTimer.current = setTimeout(() => setConfirmId(null), 3000)
+    }
+  }
 
   // Collect all unique tags
   const allTags = Array.from(new Set(entries.flatMap(e => e.tags))).sort()
@@ -39,9 +58,9 @@ export default function EntryList() {
         <select
           value={filterProject}
           onChange={e => setFilterProject(e.target.value)}
-          className="px-2.5 py-1 text-xs rounded-[8px] ml-auto"
+          className="select px-2.5 py-1 text-xs rounded-[8px] ml-auto"
           style={{
-            background: 'var(--panel-2)',
+            backgroundColor: 'var(--panel-2)',
             border: '1px solid var(--line)',
             color: 'var(--ink-dim)',
           }}
@@ -57,9 +76,9 @@ export default function EntryList() {
           <select
             value={filterTag}
             onChange={e => setFilterTag(e.target.value)}
-            className="px-2.5 py-1 text-xs rounded-[8px]"
+            className="select px-2.5 py-1 text-xs rounded-[8px]"
             style={{
-              background: 'var(--panel-2)',
+              backgroundColor: 'var(--panel-2)',
               border: '1px solid var(--line)',
               color: 'var(--ink-dim)',
             }}
@@ -153,14 +172,18 @@ export default function EntryList() {
                     ✎
                   </button>
 
-                  {/* Delete */}
+                  {/* Delete — first click arms, second confirms */}
                   <button
-                    onClick={() => deleteEntry(e.id)}
+                    onClick={() => handleDelete(e.id)}
                     className="text-sm px-1.5 py-1 rounded transition-colors"
-                    style={{ background: 'transparent', border: 'none', color: 'var(--ink-mute)' }}
-                    title={t('delete')}
+                    style={{
+                      background: confirmId === e.id ? 'var(--danger-bg)' : 'transparent',
+                      border: 'none',
+                      color: confirmId === e.id ? 'var(--danger)' : 'var(--ink-mute)',
+                    }}
+                    title={confirmId === e.id ? t('confirmDeleteHint') : t('delete')}
                   >
-                    ✕
+                    {confirmId === e.id ? '✓' : '✕'}
                   </button>
                 </li>
               )

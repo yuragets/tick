@@ -65,7 +65,7 @@ export default function App() {
 
   return (
     <div className="min-h-screen" style={{ background: 'var(--bg)' }}>
-      <div className="max-w-[760px] mx-auto px-4 py-6">
+      <div className="max-w-[896px] mx-auto px-4 py-6">
         <Header onOpenSettings={() => setSettingsOpen(true)} />
         <p className="text-sm mb-6" style={{ color: 'var(--ink-mute)' }}>
           {t('appSubtitle')}

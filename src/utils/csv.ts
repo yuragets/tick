@@ -2,10 +2,18 @@ import type { Entry, Project } from '../types'
 import { AppDataSchema } from '../schemas'
 import { sanitizeCsvCell } from './sanitize'
 import { IMPORT_MAX_BYTES, IMPORT_MAX_ENTRIES } from './constants'
-import { t, getLocale } from '../i18n'
+import { t } from '../i18n'
 
 const pName = (projects: Project[], id: string) =>
   projects.find(p => p.id === id)?.name ?? '—'
+
+// day/month/year, zero-padded (e.g. 06/07/2026)
+function fmtDMY(ms: number): string {
+  const d = new Date(ms)
+  const dd = String(d.getDate()).padStart(2, '0')
+  const mm = String(d.getMonth() + 1).padStart(2, '0')
+  return `${dd}/${mm}/${d.getFullYear()}`
+}
 
 function quoteCell(value: string): string {
   const safe = sanitizeCsvCell(value)
@@ -18,21 +26,49 @@ export function exportCSV(entries: Entry[], projects: Project[], rangeLabel: str
     return
   }
 
-  const locale = getLocale()
   const head = [
-    t('csvColDescription'), t('csvColProject'), t('csvColTags'),
-    t('csvColStart'), t('csvColEnd'), t('csvColHours'),
+    t('csvColProject'), t('csvColHours'), t('csvColDate'),
+    t('csvColTags'), t('csvColDescription'),
   ]
-  const rows = [...entries].sort((a, b) => a.start - b.start).map(e => [
-    quoteCell(e.desc || ''),
-    quoteCell(pName(projects, e.projectId)),
-    quoteCell((e.tags ?? []).join('; ')),
-    quoteCell(new Date(e.start).toLocaleString(locale)),
-    quoteCell(new Date(e.end).toLocaleString(locale)),
-    quoteCell(((e.end - e.start) / 3_600_000).toFixed(2)),
+  // Merge entries of the same project on the same day into one row.
+  type Group = { projectId: string; start: number; ms: number; descs: string[]; tags: Set<string> }
+  const groups = new Map<string, Group>()
+  for (const e of entries) {
+    const d = new Date(e.start)
+    const key = `${e.projectId}|${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`
+    let g = groups.get(key)
+    if (!g) {
+      g = { projectId: e.projectId, start: e.start, ms: 0, descs: [], tags: new Set() }
+      groups.set(key, g)
+    }
+    g.ms += e.end - e.start
+    g.start = Math.min(g.start, e.start)
+    const desc = (e.desc || '').trim()
+    if (desc) g.descs.push(desc)
+    for (const tag of e.tags ?? []) g.tags.add(tag)
+  }
+
+  const rows = [...groups.values()].sort((a, b) => a.start - b.start).map(g => [
+    quoteCell(pName(projects, g.projectId)),
+    quoteCell((g.ms / 3_600_000).toFixed(2)),
+    quoteCell(fmtDMY(g.start)),
+    quoteCell([...g.tags].join('; ')),
+    quoteCell(g.descs.join(' · ')),
   ])
 
-  const csv = [head.map(quoteCell).join(','), ...rows.map(r => r.join(','))].join('\n')
+  // Total time across all exported entries (as a trailing summary row).
+  const totalHours = entries.reduce((s, e) => s + (e.end - e.start), 0) / 3_600_000
+  const totalRow = [
+    quoteCell(t('totalTime')),
+    quoteCell(totalHours.toFixed(2)),
+    quoteCell(''), quoteCell(''), quoteCell(''),
+  ]
+
+  const csv = [
+    head.map(quoteCell).join(','),
+    ...rows.map(r => r.join(',')),
+    totalRow.join(','),
+  ].join('\n')
   // BOM for UTF-8 Excel compatibility
   const blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8;' })
   const url = URL.createObjectURL(blob)
@@ -96,12 +132,16 @@ function importCSV(text: string): ImportResult {
 
   for (let i = 1; i < lines.length; i++) {
     const cols = parseCSVLine(lines[i] ?? '')
-    if (cols.length < 6) continue
+    if (cols.length < 5) continue
 
-    const [desc, projName, tagsRaw, startStr, endStr] = cols
-    const start = new Date(startStr ?? '').getTime()
-    const end = new Date(endStr ?? '').getTime()
-    if (!start || !end || end <= start) continue
+    const [projName, hoursStr, dateStr, tagsRaw, desc] = cols
+    // Date is stored as day/month/year.
+    const [dd, mm, yyyy] = (dateStr ?? '').split('/').map(n => parseInt(n, 10))
+    const hours = parseFloat(hoursStr ?? '')
+    if (!dd || !mm || !yyyy || !hours || hours <= 0) continue
+    // Only a date + duration is stored; anchor at local midnight.
+    const start = new Date(yyyy, mm - 1, dd).getTime()
+    const end = start + Math.round(hours * 3_600_000)
 
     const pName = (projName ?? '').slice(0, 100)
     if (!projectMap.has(pName)) {

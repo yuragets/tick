@@ -92,9 +92,9 @@ export default function EntryEditModal() {
           <select
             value={projectId}
             onChange={e => setProjectId(e.target.value)}
-            className="w-full px-3 py-2 rounded-[10px] text-sm"
+            className="select w-full px-3 py-2 rounded-[10px] text-sm"
             style={{
-              background: 'var(--panel-2)',
+              backgroundColor: 'var(--panel-2)',
               border: '1px solid var(--line)',
               color: 'var(--ink)',
             }}

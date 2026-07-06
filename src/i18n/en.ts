@@ -95,6 +95,7 @@ const en = {
   csvColTags: 'Tags',
   csvColStart: 'Start',
   csvColEnd: 'End',
+  csvColDate: 'Date',
   csvColHours: 'Hours',
   importFileTooBig: 'File is too big (max {mb} MB)',
   importUnsupported: 'Only .json and .csv files are supported',
