@@ -34,6 +34,7 @@ interface StoreState extends AppData {
   // Timer
   setActiveProject: (id: string) => void
   startTimer: (desc: string, projectId: string, tags: string[]) => void
+  updateRunning: (patch: Partial<Pick<RunningTimer, 'start' | 'projectId'>>) => void
   stopTimer: () => void
 
   // Projects
@@ -176,6 +177,13 @@ export const useStore = create<StoreState>((set, get) => {
     startTimer(desc, projectId, tags) {
       const running: RunningTimer = { desc, projectId, tags, start: Date.now() }
       set({ running })
+      void persist()
+    },
+
+    updateRunning(patch) {
+      const { running } = get()
+      if (!running) return
+      set({ running: { ...running, ...patch } })
       void persist()
     },
 

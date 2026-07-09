@@ -12,6 +12,26 @@ export function hm(ms: number): string {
   return `${Math.floor(m / 60)}${t('unitHour')} ${m % 60}${t('unitMinute')}`
 }
 
+/** Local time-of-day as "HH:MM", for a native <input type="time">. */
+export function timeInput(ms: number): string {
+  const d = new Date(ms)
+  return `${pad(d.getHours())}:${pad(d.getMinutes())}`
+}
+
+/**
+ * Apply an "HH:MM" time-of-day to the calendar day of `baseMs`.
+ * Returns null if the string is not a valid time.
+ */
+export function applyTimeOfDay(baseMs: number, hhmm: string): number | null {
+  const m = /^(\d{1,2}):(\d{2})$/.exec(hhmm)
+  if (!m) return null
+  const h = +m[1], min = +m[2]
+  if (h > 23 || min > 59) return null
+  const d = new Date(baseMs)
+  d.setHours(h, min, 0, 0)
+  return d.getTime()
+}
+
 export function dtLocal(ms: number): string {
   const d = new Date(ms - new Date().getTimezoneOffset() * 60_000)
   return d.toISOString().slice(0, 16)
