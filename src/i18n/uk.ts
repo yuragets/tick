@@ -42,6 +42,7 @@ const uk: Dict = {
   // Entry list
   entries: 'Записи',
   allProjects: 'Усі проєкти',
+  nProjects: 'Проєктів: {count}',
   allTags: 'Усі теги',
   emptyStart: 'Поки порожньо — запусти таймер.',
   emptyFiltered: 'Немає записів за обраними фільтрами.',

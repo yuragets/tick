@@ -3,6 +3,7 @@ import { useStore } from '../../store/useStore'
 import { projectColor, projectName } from '../../utils/projects'
 import { hm } from '../../utils/time'
 import { useT, monthName, weekdaysMon } from '../../i18n'
+import ProjectMultiSelect from './ProjectMultiSelect'
 
 function isoWeekday(date: Date): number {
   return (date.getDay() + 6) % 7
@@ -16,7 +17,6 @@ function dayKey(date: Date): string {
 // Build CSS background for a calendar cell
 function cellBackground(
   projData: Map<string, number>,
-  filterProject: string,
   projects: ReturnType<typeof useStore.getState>['projects'],
   intensity: number,
 ): string {
@@ -24,11 +24,9 @@ function cellBackground(
 
   const opacity = Math.round((0.1 + intensity * 0.75) * 100)
 
-  // Single project selected OR only one project in this day
-  if (filterProject !== 'all' || projData.size === 1) {
-    const pid = filterProject !== 'all'
-      ? filterProject
-      : Array.from(projData.keys())[0]!
+  // Only one project tracked this day (after filtering) → solid tint
+  if (projData.size === 1) {
+    const pid = Array.from(projData.keys())[0]!
     const color = projectColor(projects, pid)
     return `color-mix(in srgb, ${color} ${opacity}%, var(--panel-2))`
   }
@@ -57,15 +55,16 @@ function cellBackground(
 interface CalendarViewProps {
   viewDate: Date
   onViewDateChange: (d: Date) => void
-  filterProject: string
-  onFilterProjectChange: (p: string) => void
+  /** Selected project ids. Empty = all projects (no filter). */
+  filterProjects: string[]
+  onFilterProjectsChange: (p: string[]) => void
 }
 
 export default function CalendarView({
   viewDate,
   onViewDateChange,
-  filterProject,
-  onFilterProjectChange,
+  filterProjects,
+  onFilterProjectsChange,
 }: CalendarViewProps) {
   const { entries, projects, settings } = useStore()
   const { t, locale } = useT()
@@ -74,7 +73,6 @@ export default function CalendarView({
 
   const today = new Date()
   const setViewDate = onViewDateChange
-  const setFilterProject = onFilterProjectChange
 
   const year = viewDate.getFullYear()
   const month = viewDate.getMonth()
@@ -84,14 +82,14 @@ export default function CalendarView({
   const dayProjMap = useMemo(() => {
     const map = new Map<string, Map<string, number>>()
     for (const e of entries) {
-      if (filterProject !== 'all' && e.projectId !== filterProject) continue
+      if (filterProjects.length && !filterProjects.includes(e.projectId)) continue
       const key = dayKey(new Date(e.start))
       if (!map.has(key)) map.set(key, new Map())
       const proj = map.get(key)!
       proj.set(e.projectId, (proj.get(e.projectId) ?? 0) + (e.end - e.start))
     }
     return map
-  }, [entries, filterProject])
+  }, [entries, filterProjects])
 
   // Per-day list of entry descriptions (non-empty), newest first
   const dayDescMap = useMemo(() => {
@@ -99,7 +97,7 @@ export default function CalendarView({
     if (!showDescriptions) return map
     const sorted = [...entries].sort((a, b) => b.start - a.start)
     for (const e of sorted) {
-      if (filterProject !== 'all' && e.projectId !== filterProject) continue
+      if (filterProjects.length && !filterProjects.includes(e.projectId)) continue
       const desc = e.desc.trim()
       if (!desc) continue
       const key = dayKey(new Date(e.start))
@@ -107,7 +105,7 @@ export default function CalendarView({
       map.get(key)!.push(desc)
     }
     return map
-  }, [entries, filterProject, showDescriptions])
+  }, [entries, filterProjects, showDescriptions])
 
   // Total ms per day
   const dayTotalMap = useMemo(() => {
@@ -200,15 +198,7 @@ export default function CalendarView({
           >{t('today')}</button>
         </div>
 
-        <select
-          value={filterProject}
-          onChange={e => setFilterProject(e.target.value)}
-          className="select px-2.5 py-1.5 text-sm rounded-[10px]"
-          style={{ backgroundColor: 'var(--panel-2)', border: '1px solid var(--line)', color: 'var(--ink)' }}
-        >
-          <option value="all">{t('allProjects')}</option>
-          {projects.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
-        </select>
+        <ProjectMultiSelect value={filterProjects} onChange={onFilterProjectsChange} />
       </div>
 
       {/* Weekday headers */}
@@ -232,11 +222,11 @@ export default function CalendarView({
           const intensity = maxMs > 0 && totalMs > 0 ? totalMs / maxMs : 0
 
           const bg = totalMs > 0
-            ? cellBackground(projData, filterProject, projects, intensity)
+            ? cellBackground(projData, projects, intensity)
             : 'var(--panel-2)'
 
-          // Project color dots (when "all" mode and multiple projects)
-          const projDots = filterProject === 'all' && projData.size > 1
+          // Project color dots when multiple projects are tracked that day
+          const projDots = projData.size > 1
             ? Array.from(projData.entries())
                 .sort((a, b) => b[1] - a[1])
                 .slice(0, 4)

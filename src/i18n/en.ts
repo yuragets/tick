@@ -42,6 +42,7 @@ const en = {
   // Entry list
   entries: 'Entries',
   allProjects: 'All projects',
+  nProjects: '{count} projects',
   allTags: 'All tags',
   emptyStart: 'Nothing yet — start the timer.',
   emptyFiltered: 'No entries match the selected filters.',

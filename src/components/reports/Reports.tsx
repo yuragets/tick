@@ -11,6 +11,7 @@ import ReportChart from './ReportChart'
 import type { ProjPoint, DayPoint } from './ReportChart'
 import Breakdown from './Breakdown'
 import CalendarView from './CalendarView'
+import ProjectMultiSelect from './ProjectMultiSelect'
 import type { BreakdownItem } from './Breakdown'
 
 export default function Reports() {
@@ -20,11 +21,12 @@ export default function Reports() {
   const [range, setRange] = useState<ReportRange>('today')
   const [custom, setCustom] = useState<CustomRange>({ from: '', to: '' })
   const [chartMode, setChartMode] = useState<ChartMode>('proj')
-  const [filterProject, setFilterProject] = useState<string>('all')
+  // Selected project ids for the chart filter. Empty = all projects.
+  const [filterProjects, setFilterProjects] = useState<string[]>([])
   // Calendar state lives here so CSV export can follow the visible month.
   const now = new Date()
   const [calMonth, setCalMonth] = useState(new Date(now.getFullYear(), now.getMonth(), 1))
-  const [calProject, setCalProject] = useState<string>('all')
+  const [calProjects, setCalProjects] = useState<string[]>([])
   const [importError, setImportError] = useState<string | null>(null)
   const [importSuccess, setImportSuccess] = useState<string | null>(null)
   const fileRef = useRef<HTMLInputElement>(null)
@@ -33,9 +35,9 @@ export default function Reports() {
 
   // Date-range filter first, then optional project filter
   const rangeFiltered = entries.filter(e => e.start >= fromMs && e.start <= toMs)
-  const filtered = filterProject === 'all'
+  const filtered = filterProjects.length === 0
     ? rangeFiltered
-    : rangeFiltered.filter(e => e.projectId === filterProject)
+    : rangeFiltered.filter(e => filterProjects.includes(e.projectId))
 
   // ── Stats ──────────────────────────────────────────
   let totalMs = 0
@@ -124,7 +126,7 @@ export default function Reports() {
   const calTo = new Date(calMonth.getFullYear(), calMonth.getMonth() + 1, 0, 23, 59, 59, 999).getTime()
   const calEntries = entries.filter(e =>
     e.start >= calFrom && e.start <= calTo &&
-    (calProject === 'all' || e.projectId === calProject)
+    (calProjects.length === 0 || calProjects.includes(e.projectId))
   )
   const calLabel = `${calMonth.getFullYear()}-${String(calMonth.getMonth() + 1).padStart(2, '0')}`
 
@@ -205,21 +207,7 @@ export default function Reports() {
         <div className="flex items-center gap-2 flex-wrap">
           {/* Project filter */}
           {!isCalendar && (
-            <select
-              value={filterProject}
-              onChange={e => setFilterProject(e.target.value)}
-              className="select px-2.5 py-1.5 text-sm rounded-[10px]"
-              style={{
-                backgroundColor: 'var(--panel-2)',
-                border: '1px solid var(--line)',
-                color: filterProject === 'all' ? 'var(--ink-dim)' : 'var(--ink)',
-              }}
-            >
-              <option value="all">{t('allProjects')}</option>
-              {projects.map(p => (
-                <option key={p.id} value={p.id}>{p.name}</option>
-              ))}
-            </select>
+            <ProjectMultiSelect value={filterProjects} onChange={setFilterProjects} />
           )}
 
           {/* Import */}
@@ -258,8 +246,8 @@ export default function Reports() {
         <CalendarView
           viewDate={calMonth}
           onViewDateChange={setCalMonth}
-          filterProject={calProject}
-          onFilterProjectChange={setCalProject}
+          filterProjects={calProjects}
+          onFilterProjectsChange={setCalProjects}
         />
       )}
 
