@@ -22,6 +22,9 @@ const en = {
   tagsPlaceholder: 'Tags, comma-separated (optional)',
   start: '▶ Start',
   stop: '■ Stop',
+  editStart: 'Adjust start time',
+  startTime: 'Start time',
+  newStartFuture: 'Start time cannot be in the future',
 
   // Projects
   projects: 'Projects',

@@ -3,17 +3,24 @@ import { useStore } from '../store/useStore'
 import { useTimer } from '../hooks/useTimer'
 import { parseTags } from '../utils/sanitize'
 import { MAX_DESC_LEN } from '../utils/constants'
+import { hms, timeInput, applyTimeOfDay } from '../utils/time'
 import { fieldStyle } from '../ui'
 import { useT } from '../i18n'
 
 export default function Timer() {
-  const { running, projects, activeProjectId, startTimer, stopTimer, setActiveProject } = useStore()
+  const { running, projects, activeProjectId, startTimer, stopTimer, setActiveProject, updateRunning } = useStore()
   const { t } = useT()
   const display = useTimer()
 
   const [desc, setDesc] = useState('')
   const [tagsRaw, setTagsRaw] = useState('')
   const [projId, setProjId] = useState(activeProjectId)
+
+  // Inline "adjust start time" form (only meaningful while running)
+  const [editing, setEditing] = useState(false)
+  const [draft, setDraft] = useState(0)          // working start time, ms epoch
+  const [startHHMM, setStartHHMM] = useState('') // HH:MM mirror of `draft`
+  const [editProj, setEditProj] = useState('')
 
   // Sync projId when activeProjectId changes from ProjectList
   useEffect(() => {
@@ -34,6 +41,7 @@ export default function Timer() {
       stopTimer()
       setDesc('')
       setTagsRaw('')
+      setEditing(false)
     } else {
       startTimer(desc.trim().slice(0, MAX_DESC_LEN), projId, parseTags(tagsRaw))
       setActiveProject(projId)
@@ -43,6 +51,28 @@ export default function Timer() {
   function handleProjChange(id: string) {
     setProjId(id)
     setActiveProject(id)
+  }
+
+  function openEdit() {
+    if (!running) return
+    setDraft(running.start)
+    setStartHHMM(timeInput(running.start))
+    setEditProj(running.projectId)
+    setEditing(true)
+  }
+
+  function handleHHMM(v: string) {
+    setStartHHMM(v)
+    const next = applyTimeOfDay(draft, v)
+    if (next != null) setDraft(next)
+  }
+
+  const draftFuture = draft > Date.now()
+
+  function saveEdit() {
+    if (!running || draftFuture) return
+    updateRunning({ start: draft, projectId: editProj })
+    setEditing(false)
   }
 
   return (
@@ -100,6 +130,21 @@ export default function Timer() {
         >
           {display}
         </span>
+        {running && (
+          <button
+            onClick={() => (editing ? setEditing(false) : openEdit())}
+            title={t('editStart')}
+            aria-label={t('editStart')}
+            className="w-8 h-8 flex items-center justify-center rounded-[8px] border text-sm transition-colors"
+            style={{
+              background: editing ? 'var(--accent-bg)' : 'var(--panel-2)',
+              borderColor: editing ? 'var(--accent)' : 'var(--line-strong)',
+              color: editing ? 'var(--accent)' : 'var(--ink)',
+            }}
+          >
+            ✎
+          </button>
+        )}
         <button
           onClick={handleToggle}
           className="ml-auto px-6 py-2.5 text-[15px] font-medium rounded-[10px] border transition-all active:scale-[.98]"
@@ -111,6 +156,65 @@ export default function Timer() {
           {running ? t('stop') : t('start')}
         </button>
       </div>
+
+      {/* Adjust start time (inline) */}
+      {running && editing && (
+        <div
+          className="mt-3.5 p-3.5 rounded-[10px] flex flex-col gap-3"
+          style={{ background: 'var(--panel-2)', border: '1px solid var(--line)' }}
+        >
+          {/* Exact start time + project */}
+          <div className="flex flex-wrap gap-2.5">
+            <div className="flex-1 min-w-[130px]">
+              <label className="block text-xs mb-1" style={{ color: 'var(--ink-mute)' }}>{t('startTime')}</label>
+              <input
+                type="time"
+                value={startHHMM}
+                onChange={e => handleHHMM(e.target.value)}
+                className="w-full px-3 py-2 rounded-[10px] text-sm"
+                style={fieldStyle}
+              />
+            </div>
+            <div className="flex-1 min-w-[130px]">
+              <label className="block text-xs mb-1" style={{ color: 'var(--ink-mute)' }}>{t('project')}</label>
+              <select
+                value={editProj}
+                onChange={e => setEditProj(e.target.value)}
+                className="select w-full px-3 py-2 rounded-[10px] text-sm"
+                style={{ backgroundColor: 'var(--panel)', border: '1px solid var(--line)', color: 'var(--ink)' }}
+              >
+                {projects.map(p => (
+                  <option key={p.id} value={p.id}>{p.name}</option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          {/* Preview / validation */}
+          <div className="text-xs font-mono tabular-nums" style={{ color: draftFuture ? 'var(--danger)' : 'var(--ink-mute)' }}>
+            {draftFuture ? t('newStartFuture') : `→ ${hms(Date.now() - draft)}`}
+          </div>
+
+          {/* Actions */}
+          <div className="flex gap-2 justify-end">
+            <button
+              onClick={() => setEditing(false)}
+              className="px-4 py-1.5 text-sm rounded-[10px] border transition-colors"
+              style={{ background: 'var(--panel)', borderColor: 'var(--line-strong)', color: 'var(--ink)' }}
+            >
+              {t('cancel')}
+            </button>
+            <button
+              onClick={saveEdit}
+              disabled={draftFuture}
+              className="px-4 py-1.5 text-sm rounded-[10px] border transition-colors disabled:opacity-50"
+              style={{ background: 'var(--accent-bg)', borderColor: 'var(--accent)', color: 'var(--accent)' }}
+            >
+              {t('save')}
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

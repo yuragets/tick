@@ -22,6 +22,9 @@ const uk: Dict = {
   tagsPlaceholder: 'Теги через кому (необов’язково)',
   start: '▶ Старт',
   stop: '■ Стоп',
+  editStart: 'Скоригувати час старту',
+  startTime: 'Час старту',
+  newStartFuture: 'Час старту не може бути в майбутньому',
 
   // Projects
   projects: 'Проєкти',
