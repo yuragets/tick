@@ -41,9 +41,9 @@ interface StoreState extends AppData {
   stopTimer: () => void
 
   // Projects
-  addProject: (name: string) => void
+  addProject: (name: string) => string
   updateProject: (id: string, patch: { name?: string; color?: string }) => void
-  deleteProject: (id: string) => void
+  deleteProject: (id: string, reassignToId?: string) => void
 
   // Entries
   updateEntry: (id: string, patch: Partial<Omit<Entry, 'id'>>) => void
@@ -229,6 +229,7 @@ export const useStore = create<StoreState>((set, get) => {
       const newProject: Project = { id, name }
       set({ projects: [...projects, newProject], activeProjectId: id })
       void persist()
+      return id
     },
 
     updateProject(id, patch) {
@@ -238,12 +239,17 @@ export const useStore = create<StoreState>((set, get) => {
       void persist()
     },
 
-    deleteProject(id) {
-      const { projects, activeProjectId } = get()
+    deleteProject(id, reassignToId) {
+      const { projects, entries, activeProjectId } = get()
       if (projects.length <= 1) return
       const next = projects.filter(p => p.id !== id)
       const nextActive = activeProjectId === id ? (next[0]?.id ?? '') : activeProjectId
-      set({ projects: next, activeProjectId: nextActive })
+      // Optionally move this project's entries onto another project so they
+      // keep a label instead of becoming orphaned ("—").
+      const nextEntries = reassignToId
+        ? entries.map(e => (e.projectId === id ? { ...e, projectId: reassignToId } : e))
+        : entries
+      set({ projects: next, entries: nextEntries, activeProjectId: nextActive })
       void persist()
     },
 

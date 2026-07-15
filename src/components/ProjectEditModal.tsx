@@ -2,7 +2,6 @@ import { useState } from 'react'
 import { useStore } from '../store/useStore'
 import { PALETTE, MAX_NAME_LEN } from '../utils/constants'
 import { fieldStyle } from '../ui'
-import { useConfirm } from '../hooks/useConfirm'
 import { useT } from '../i18n'
 import Modal from './Modal'
 
@@ -11,14 +10,25 @@ interface Props {
   onClose: () => void
 }
 
+// Sentinel reassignment targets (never valid project ids).
+const NEW = '__new__'
+const ORPHAN = '__orphan__'
+
 export default function ProjectEditModal({ projectId, onClose }: Props) {
-  const { projects, updateProject, deleteProject, activeProjectId, setActiveProject } = useStore()
+  const { projects, entries, updateProject, deleteProject, addProject } = useStore()
   const { t } = useT()
   const project = projects.find(p => p.id === projectId)
 
   const [name, setName] = useState(project?.name ?? '')
   const [color, setColor] = useState(project?.color ?? PALETTE[projects.findIndex(p => p.id === projectId) % PALETTE.length] ?? PALETTE[0]!)
-  const { confirm, isArmed } = useConfirm()
+
+  const otherProjects = projects.filter(p => p.id !== projectId)
+  const entryCount = entries.filter(e => e.projectId === projectId).length
+
+  const [confirmingDelete, setConfirmingDelete] = useState(false)
+  // Where to move this project's entries when it has any.
+  const [reassignTo, setReassignTo] = useState<string>(otherProjects[0]?.id ?? ORPHAN)
+  const [newProjName, setNewProjName] = useState('')
 
   if (!project) return null
 
@@ -29,18 +39,104 @@ export default function ProjectEditModal({ projectId, onClose }: Props) {
     onClose()
   }
 
-  function handleDelete() {
-    if (!confirm('delete')) return
-    if (activeProjectId === projectId) {
-      const next = projects.find(p => p.id !== projectId)
-      if (next) setActiveProject(next.id)
+  function handleConfirmDelete() {
+    if (entryCount > 0 && reassignTo === NEW) {
+      const trimmed = newProjName.trim().slice(0, MAX_NAME_LEN)
+      if (!trimmed) return
+      const newId = addProject(trimmed)
+      deleteProject(projectId, newId)
+    } else if (entryCount > 0 && reassignTo !== ORPHAN) {
+      deleteProject(projectId, reassignTo)
+    } else {
+      // No entries, or the user chose to leave them without a project.
+      deleteProject(projectId)
     }
-    deleteProject(projectId)
     onClose()
   }
 
   const canDelete = projects.length > 1
+  const deleteDisabled = entryCount > 0 && reassignTo === NEW && !newProjName.trim()
 
+  // ── Delete confirmation view ─────────────────────────────
+  if (confirmingDelete) {
+    return (
+      <Modal onClose={onClose} maxWidth={380}>
+        <h3 className="text-base font-semibold mb-4" style={{ color: 'var(--ink)' }}>
+          {t('deleteTitle')}
+        </h3>
+
+        {entryCount === 0 ? (
+          <p className="text-sm mb-5" style={{ color: 'var(--ink-dim)' }}>
+            {t('deleteConfirm', { name: project.name })}
+          </p>
+        ) : (
+          <>
+            <p className="text-sm mb-3" style={{ color: 'var(--ink-dim)' }}>
+              {t('deleteEntriesInfo', { name: project.name, count: entryCount })}
+            </p>
+            <select
+              value={reassignTo}
+              onChange={e => setReassignTo(e.target.value)}
+              className="select w-full px-3 py-2 rounded-[10px] text-sm mb-2"
+              style={fieldStyle}
+            >
+              {otherProjects.map(p => (
+                <option key={p.id} value={p.id}>{p.name}</option>
+              ))}
+              <option value={NEW}>{t('reassignNew')}</option>
+              <option value={ORPHAN}>{t('reassignOrphan')}</option>
+            </select>
+
+            {reassignTo === NEW && (
+              <input
+                type="text"
+                maxLength={MAX_NAME_LEN}
+                value={newProjName}
+                onChange={e => setNewProjName(e.target.value)}
+                onKeyDown={e => { if (e.key === 'Enter' && !deleteDisabled) handleConfirmDelete() }}
+                placeholder={t('newProjectName')}
+                className="w-full px-3 py-2 rounded-[10px] text-sm mb-2"
+                style={fieldStyle}
+                autoFocus
+              />
+            )}
+
+            {reassignTo === ORPHAN && (
+              <p className="text-xs mb-2" style={{ color: 'var(--ink-mute)' }}>
+                {t('reassignOrphanHint')}
+              </p>
+            )}
+          </>
+        )}
+
+        <div className="flex items-center gap-2 mt-5">
+          <button
+            onClick={() => setConfirmingDelete(false)}
+            className="px-4 py-2 text-sm rounded-[10px] border transition-colors mr-auto"
+            style={{ background: 'var(--panel-2)', borderColor: 'var(--line-strong)', color: 'var(--ink)' }}
+          >
+            {t('cancel')}
+          </button>
+          <button
+            onClick={handleConfirmDelete}
+            disabled={deleteDisabled}
+            className="px-4 py-2 text-sm rounded-[10px] border transition-all"
+            style={{
+              background: 'var(--danger)',
+              borderColor: 'var(--danger)',
+              color: '#fff',
+              opacity: deleteDisabled ? 0.5 : 1,
+              cursor: deleteDisabled ? 'not-allowed' : 'pointer',
+            }}
+          >
+            {t('delete')}
+          </button>
+        </div>
+      </Modal>
+    )
+  }
+
+  // ── Edit view ────────────────────────────────────────────
   return (
     <Modal onClose={onClose} maxWidth={380}>
         <h3 className="text-base font-semibold mb-4" style={{ color: 'var(--ink)' }}>
@@ -114,14 +210,11 @@ export default function ProjectEditModal({ projectId, onClose }: Props) {
         <div className="flex items-center gap-2">
           {canDelete && (
             <button
-              onClick={handleDelete}
+              onClick={() => setConfirmingDelete(true)}
               className="px-3 py-2 text-sm rounded-[10px] border transition-all mr-auto"
-              style={isArmed('delete')
-                ? { background: 'var(--danger)', borderColor: 'var(--danger)', color: '#fff' }
-                : { background: 'var(--danger-bg)', borderColor: 'var(--danger)', color: 'var(--danger)' }
-              }
+              style={{ background: 'var(--danger-bg)', borderColor: 'var(--danger)', color: 'var(--danger)' }}
             >
-              {isArmed('delete') ? t('confirmDelete') : t('delete')}
+              {t('delete')}
             </button>
           )}
           <button
@@ -139,12 +232,6 @@ export default function ProjectEditModal({ projectId, onClose }: Props) {
             {t('save')}
           </button>
         </div>
-
-        {isArmed('delete') && (
-          <p className="text-xs mt-2 text-right" style={{ color: 'var(--ink-mute)' }}>
-            {t('confirmDeleteHint')}
-          </p>
-        )}
     </Modal>
   )
 }

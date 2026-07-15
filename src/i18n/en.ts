@@ -44,6 +44,13 @@ const en = {
   confirmDeleteHint: 'Click again to confirm',
   cancel: 'Cancel',
   save: 'Save',
+  deleteTitle: 'Delete project',
+  deleteConfirm: 'Delete “{name}”? This can’t be undone.',
+  deleteEntriesInfo: '“{name}” has {count} entries. Where should they go?',
+  reassignNew: '＋ New project…',
+  reassignOrphan: 'Leave without a project',
+  reassignOrphanHint: 'Entries are kept but shown without a project (“—”).',
+  newProjectName: 'New project name',
 
   // Entry list
   entries: 'Entries',

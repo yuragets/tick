@@ -44,6 +44,13 @@ const uk: Dict = {
   confirmDeleteHint: 'Натисни ще раз для підтвердження',
   cancel: 'Скасувати',
   save: 'Зберегти',
+  deleteTitle: 'Видалити проєкт',
+  deleteConfirm: 'Видалити «{name}»? Це не можна скасувати.',
+  deleteEntriesInfo: 'У проєкті «{name}» є записів: {count}. Куди їх перенести?',
+  reassignNew: '＋ Новий проєкт…',
+  reassignOrphan: 'Залишити без проєкту',
+  reassignOrphanHint: 'Записи збережуться, але показуватимуться без проєкту («—»).',
+  newProjectName: 'Назва нового проєкту',
 
   // Entry list
   entries: 'Записи',
