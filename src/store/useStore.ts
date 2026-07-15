@@ -3,6 +3,7 @@ import type { AppData, Entry, Lang, Project, RunningTimer, Settings, Theme } fro
 import { createStorageAdapter, StorageUnavailableError } from '../storage'
 import { readLegacyData, hasLegacyData, isBackendEmpty } from '../storage/migration'
 import { DEFAULT_SETTINGS } from '../utils/constants'
+import { runningElapsed } from '../utils/time'
 import { t, setActiveLang } from '../i18n'
 
 const adapter = createStorageAdapter()
@@ -35,6 +36,8 @@ interface StoreState extends AppData {
   setActiveProject: (id: string) => void
   startTimer: (desc: string, projectId: string, tags: string[]) => void
   updateRunning: (patch: Partial<Pick<RunningTimer, 'start' | 'projectId'>>) => void
+  pauseTimer: () => void
+  resumeTimer: () => void
   stopTimer: () => void
 
   // Projects
@@ -187,16 +190,34 @@ export const useStore = create<StoreState>((set, get) => {
       void persist()
     },
 
+    pauseTimer() {
+      const { running } = get()
+      if (!running || running.pausedAt != null) return
+      set({ running: { ...running, pausedAt: Date.now() } })
+      void persist()
+    },
+
+    resumeTimer() {
+      const { running } = get()
+      if (!running || running.pausedAt == null) return
+      const pausedMs = (running.pausedMs ?? 0) + (Date.now() - running.pausedAt)
+      set({ running: { ...running, pausedAt: null, pausedMs } })
+      void persist()
+    },
+
     stopTimer() {
       const { running, entries } = get()
       if (!running) return
+      // Exclude paused spans from the recorded duration while keeping the
+      // real start time; end is derived so end - start == worked time.
+      const worked = Math.max(1000, runningElapsed(running))
       const newEntry: Entry = {
         id: 'e' + Date.now(),
         desc: running.desc,
         projectId: running.projectId,
         tags: running.tags,
         start: running.start,
-        end: Date.now(),
+        end: running.start + worked,
       }
       set({ running: null, entries: [newEntry, ...entries] })
       void persist()

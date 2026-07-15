@@ -52,6 +52,17 @@ db.exec(`
   );
 `)
 
+// Add pause columns to `running` for databases created before the pause
+// feature. `CREATE TABLE IF NOT EXISTS` won't touch an existing table.
+function ensureColumn(table: string, column: string, decl: string): void {
+  const cols = db.prepare(`PRAGMA table_info(${table})`).all() as { name: string }[]
+  if (!cols.some(c => c.name === column)) {
+    db.exec(`ALTER TABLE ${table} ADD COLUMN ${column} ${decl}`)
+  }
+}
+ensureColumn('running', 'paused_at', 'INTEGER')
+ensureColumn('running', 'paused_ms', 'INTEGER NOT NULL DEFAULT 0')
+
 const DEFAULT_SETTINGS: Settings = { showDescriptions: true }
 
 // ── Row types & mappers ────────────────────────────────
@@ -63,6 +74,7 @@ interface EntryRow {
 interface RunningRow {
   id: number; desc: string; project_id: string
   tags: string; start: number
+  paused_at: number | null; paused_ms: number
 }
 
 function toProject(r: ProjectRow): Project {
@@ -79,7 +91,14 @@ function toEntry(r: EntryRow): Entry {
   }
 }
 function toRunning(r: RunningRow): RunningTimer {
-  return { desc: r.desc, projectId: r.project_id, tags: safeParseTags(r.tags), start: r.start }
+  return {
+    desc: r.desc,
+    projectId: r.project_id,
+    tags: safeParseTags(r.tags),
+    start: r.start,
+    pausedAt: r.paused_at ?? null,
+    pausedMs: r.paused_ms ?? 0,
+  }
 }
 function safeParseTags(raw: string): string[] {
   try {
@@ -165,8 +184,8 @@ export function deleteEntry(id: string): boolean {
 const stmtGetRunning = db.prepare('SELECT * FROM running WHERE id = 1')
 const stmtClearRunning = db.prepare('DELETE FROM running')
 const stmtSetRunning = db.prepare(
-  `INSERT OR REPLACE INTO running (id, desc, project_id, tags, start)
-   VALUES (1, @desc, @project_id, @tags, @start)`
+  `INSERT OR REPLACE INTO running (id, desc, project_id, tags, start, paused_at, paused_ms)
+   VALUES (1, @desc, @project_id, @tags, @start, @paused_at, @paused_ms)`
 )
 
 export function getRunning(): RunningTimer | null {
@@ -177,6 +196,7 @@ export function setRunning(r: RunningTimer): RunningTimer {
   stmtSetRunning.run({
     desc: r.desc, project_id: r.projectId,
     tags: JSON.stringify(r.tags), start: r.start,
+    paused_at: r.pausedAt ?? null, paused_ms: r.pausedMs ?? 0,
   })
   return r
 }

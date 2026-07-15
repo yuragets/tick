@@ -28,6 +28,8 @@ export const RunningTimerSchema = z.object({
   projectId: z.string().min(1).max(64),
   tags: z.array(z.string().max(MAX_TAG_LEN)).max(20).default([]),
   start: z.number().int().positive(),
+  pausedAt: z.number().int().positive().nullable().optional(),
+  pausedMs: z.number().int().nonnegative().optional(),
 })
 
 export const SettingsSchema = z.object({

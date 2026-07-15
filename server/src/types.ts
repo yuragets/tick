@@ -21,6 +21,8 @@ export interface RunningTimer {
   projectId: string
   tags: string[]
   start: number
+  pausedAt?: number | null
+  pausedMs?: number
 }
 
 export interface Settings {

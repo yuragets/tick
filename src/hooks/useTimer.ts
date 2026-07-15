@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { useStore } from '../store/useStore'
-import { hms } from '../utils/time'
+import { hms, runningElapsed } from '../utils/time'
 import { projectName } from '../utils/projects'
 
 export function useTimer() {
@@ -15,9 +15,10 @@ export function useTimer() {
       const proj = projectName(projects, running.projectId)
 
       const tick = () => {
-        const elapsed = hms(Date.now() - running.start)
+        const elapsed = hms(runningElapsed(running))
         setDisplay(elapsed)
-        document.title = `${elapsed} · ${proj} — Tick`
+        const prefix = running.pausedAt != null ? '⏸ ' : ''
+        document.title = `${prefix}${elapsed} · ${proj} — Tick`
       }
       tick()
       tickRef.current = setInterval(tick, 1000)

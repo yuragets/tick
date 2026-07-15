@@ -1,6 +1,13 @@
 import { t, getLocale } from '../i18n'
+import type { RunningTimer } from '../types'
 
 const pad = (n: number) => String(Math.floor(n)).padStart(2, '0')
+
+/** Worked milliseconds for a running timer, excluding any paused spans. */
+export function runningElapsed(r: RunningTimer, now = Date.now()): number {
+  const ref = r.pausedAt ?? now
+  return Math.max(0, ref - r.start - (r.pausedMs ?? 0))
+}
 
 export function hms(ms: number): string {
   const s = ms / 1000

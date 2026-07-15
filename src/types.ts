@@ -18,6 +18,8 @@ export interface RunningTimer {
   projectId: string
   tags: string[]
   start: number  // ms epoch
+  pausedAt?: number | null  // ms epoch when paused; absent/null while running
+  pausedMs?: number         // total paused time accumulated before the current run
 }
 
 export type Lang = 'en' | 'uk'

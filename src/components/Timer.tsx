@@ -8,9 +8,10 @@ import { fieldStyle } from '../ui'
 import { useT } from '../i18n'
 
 export default function Timer() {
-  const { running, projects, activeProjectId, startTimer, stopTimer, setActiveProject, updateRunning } = useStore()
+  const { running, projects, activeProjectId, startTimer, stopTimer, pauseTimer, resumeTimer, setActiveProject, updateRunning } = useStore()
   const { t } = useT()
   const display = useTimer()
+  const paused = running?.pausedAt != null
 
   const [desc, setDesc] = useState('')
   const [tagsRaw, setTagsRaw] = useState('')
@@ -125,11 +126,19 @@ export default function Timer() {
       {/* Row 3: Timer display + button */}
       <div className="flex items-center gap-3 flex-wrap">
         <span
-          className="font-mono text-[38px] font-medium tracking-[1px] tabular-nums"
-          style={{ color: 'var(--ink)' }}
+          className="font-mono text-[38px] font-medium tracking-[1px] tabular-nums transition-colors"
+          style={{ color: paused ? 'var(--accent)' : 'var(--ink)' }}
         >
           {display}
         </span>
+        {paused && (
+          <span
+            className="text-xs font-medium uppercase tracking-widest"
+            style={{ color: 'var(--accent)' }}
+          >
+            {t('paused')}
+          </span>
+        )}
         {running && (
           <button
             onClick={() => (editing ? setEditing(false) : openEdit())}
@@ -145,16 +154,32 @@ export default function Timer() {
             ✎
           </button>
         )}
-        <button
-          onClick={handleToggle}
-          className="ml-auto px-6 py-2.5 text-[15px] font-medium rounded-[10px] border transition-all active:scale-[.98]"
-          style={running
-            ? { background: 'var(--danger-bg)', borderColor: 'var(--danger)', color: '#f0a0a0' }
-            : { background: 'var(--panel-2)', borderColor: 'var(--line-strong)', color: 'var(--ink)' }
-          }
-        >
-          {running ? t('stop') : t('start')}
-        </button>
+        {running ? (
+          <div className="ml-auto flex gap-2">
+            <button
+              onClick={() => (paused ? resumeTimer() : pauseTimer())}
+              className="px-5 py-2.5 text-[15px] font-medium rounded-[10px] border transition-all active:scale-[.98]"
+              style={{ background: 'var(--accent-bg)', borderColor: 'var(--accent)', color: 'var(--accent)' }}
+            >
+              {paused ? t('resume') : t('pause')}
+            </button>
+            <button
+              onClick={handleToggle}
+              className="px-6 py-2.5 text-[15px] font-medium rounded-[10px] border transition-all active:scale-[.98]"
+              style={{ background: 'var(--danger-bg)', borderColor: 'var(--danger)', color: '#f0a0a0' }}
+            >
+              {t('stop')}
+            </button>
+          </div>
+        ) : (
+          <button
+            onClick={handleToggle}
+            className="ml-auto px-6 py-2.5 text-[15px] font-medium rounded-[10px] border transition-all active:scale-[.98]"
+            style={{ background: 'var(--panel-2)', borderColor: 'var(--line-strong)', color: 'var(--ink)' }}
+          >
+            {t('start')}
+          </button>
+        )}
       </div>
 
       {/* Adjust start time (inline) */}
