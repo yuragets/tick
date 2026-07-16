@@ -69,6 +69,7 @@ const en = {
   tagsComma: 'Tags (comma-separated)',
   start_: 'Start',
   end_: 'End',
+  duration_: 'Duration',
 
   // Reports — ranges
   rangeToday: 'Today',

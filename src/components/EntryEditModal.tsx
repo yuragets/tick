@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useStore } from '../store/useStore'
-import { dtLocal, parseDatetimeLocal } from '../utils/time'
+import { dtLocal, parseDatetimeLocal, hms, parseHms } from '../utils/time'
 import { parseTags } from '../utils/sanitize'
 import { MAX_DESC_LEN } from '../utils/constants'
 import { fieldStyle } from '../ui'
@@ -18,6 +18,7 @@ export default function EntryEditModal() {
   const [tagsRaw, setTagsRaw] = useState('')
   const [startStr, setStartStr] = useState('')
   const [endStr, setEndStr] = useState('')
+  const [durStr, setDurStr] = useState('')
 
   // Register opener so EntryList can trigger this modal
   useEffect(() => {
@@ -30,8 +31,32 @@ export default function EntryEditModal() {
       setTagsRaw(entry.tags.join(', '))
       setStartStr(dtLocal(entry.start))
       setEndStr(dtLocal(entry.end))
+      setDurStr(hms(entry.end - entry.start))
     })
   }, [entries])
+
+  // Editing start/end recomputes the duration; editing the duration
+  // shifts the end (keeping the start fixed).
+  function changeStart(v: string) {
+    setStartStr(v)
+    const s = parseDatetimeLocal(v)
+    const e = parseDatetimeLocal(endStr)
+    if (Number.isFinite(s) && Number.isFinite(e) && e > s) setDurStr(hms(e - s))
+  }
+
+  function changeEnd(v: string) {
+    setEndStr(v)
+    const s = parseDatetimeLocal(startStr)
+    const e = parseDatetimeLocal(v)
+    if (Number.isFinite(s) && Number.isFinite(e) && e > s) setDurStr(hms(e - s))
+  }
+
+  function changeDuration(v: string) {
+    setDurStr(v)
+    const ms = parseHms(v)
+    const s = parseDatetimeLocal(startStr)
+    if (ms != null && ms > 0 && Number.isFinite(s)) setEndStr(dtLocal(s + ms))
+  }
 
   function handleSave() {
     if (!editId) return
@@ -108,13 +133,13 @@ export default function EntryEditModal() {
         </div>
 
         {/* Start / End */}
-        <div className="flex flex-wrap gap-2.5 mb-4">
+        <div className="flex flex-wrap gap-2.5 mb-3">
           <div className="flex-1 min-w-[180px]">
             <label className="block text-xs mb-1" style={{ color: 'var(--ink-mute)' }}>{t('start_')}</label>
             <input
               type="datetime-local"
               value={startStr}
-              onChange={e => setStartStr(e.target.value)}
+              onChange={e => changeStart(e.target.value)}
               className="w-full px-3 py-2 rounded-[10px] text-sm"
               style={fieldStyle}
             />
@@ -124,11 +149,25 @@ export default function EntryEditModal() {
             <input
               type="datetime-local"
               value={endStr}
-              onChange={e => setEndStr(e.target.value)}
+              onChange={e => changeEnd(e.target.value)}
               className="w-full px-3 py-2 rounded-[10px] text-sm"
               style={fieldStyle}
             />
           </div>
+        </div>
+
+        {/* Duration */}
+        <div className="mb-4">
+          <label className="block text-xs mb-1" style={{ color: 'var(--ink-mute)' }}>{t('duration_')}</label>
+          <input
+            type="text"
+            inputMode="numeric"
+            placeholder="00:00:00"
+            value={durStr}
+            onChange={e => changeDuration(e.target.value)}
+            className="w-full px-3 py-2 rounded-[10px] text-sm tabular-nums"
+            style={fieldStyle}
+          />
         </div>
 
         {/* Actions */}

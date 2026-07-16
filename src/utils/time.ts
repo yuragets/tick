@@ -14,6 +14,16 @@ export function hms(ms: number): string {
   return `${pad(s / 3600)}:${pad((s % 3600) / 60)}:${pad(s % 60)}`
 }
 
+/**
+ * Parse a "HH:MM:SS" (seconds optional) duration into milliseconds.
+ * Returns null if the string is not a valid duration.
+ */
+export function parseHms(s: string): number | null {
+  const m = /^(\d+):([0-5]?\d)(?::([0-5]?\d))?$/.exec(s.trim())
+  if (!m) return null
+  return (+m[1] * 3600 + +m[2] * 60 + +(m[3] ?? 0)) * 1000
+}
+
 export function hm(ms: number): string {
   const m = Math.round(ms / 60_000)
   return `${Math.floor(m / 60)}${t('unitHour')} ${m % 60}${t('unitMinute')}`

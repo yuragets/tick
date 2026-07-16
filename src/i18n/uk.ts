@@ -69,6 +69,7 @@ const uk: Dict = {
   tagsComma: 'Теги (через кому)',
   start_: 'Початок',
   end_: 'Кінець',
+  duration_: 'Тривалість',
 
   // Reports — ranges
   rangeToday: 'Сьогодні',
