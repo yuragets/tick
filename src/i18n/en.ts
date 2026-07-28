@@ -10,6 +10,7 @@ const en = {
   saveError: 'Could not save changes — check that the data service is running.',
   tabTrack: 'Timer',
   tabReport: 'Reports',
+  tabCalc: 'Calculator',
   themeLight: 'Light theme',
   themeDark: 'Dark theme',
 
@@ -82,6 +83,7 @@ const en = {
   chartCalendar: '⊞ Calendar',
   import: '↑ Import',
   csv: '↓ CSV',
+  image: '↓ Image',
   importSuccess: 'Imported: {entries} entries, {projects} projects',
 
   // Stats cards
@@ -119,6 +121,17 @@ const en = {
   importTooManyEntries: 'Too many entries (max {max})',
   importTooManyRows: 'Too many rows (max {max})',
   importCsvEmpty: 'CSV file is empty or has no data',
+
+  // Calculator
+  calcProject: 'Project',
+  calcPickProject: 'Select a project',
+  calcRate: 'Hourly rate (USD)',
+  calcFxRate: 'USD → UAH rate',
+  calcHours: 'Tracked hours',
+  calcAmountUsd: 'Amount, USD',
+  calcAmountUah: 'Amount, UAH',
+  calcNoData: 'No tracked time for this project in the selected period.',
+  calcSetFxHint: 'Enter a rate to convert to UAH.',
 
   // Time units
   unitHour: 'h',

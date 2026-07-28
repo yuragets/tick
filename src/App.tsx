@@ -7,8 +7,9 @@ import EntryList from './components/EntryList'
 import EntryEditModal from './components/EntryEditModal'
 import SettingsModal from './components/SettingsModal'
 import Reports from './components/reports/Reports'
+import Calculator from './components/Calculator'
 
-type Tab = 'track' | 'report'
+type Tab = 'track' | 'report' | 'calc'
 
 function Header({ onOpenSettings }: { onOpenSettings: () => void }) {
   const { theme, setTheme } = useStore()
@@ -115,7 +116,7 @@ export default function App() {
 
             {/* Tabs */}
             <div className="flex gap-1.5 mb-5">
-              {(['track', 'report'] as Tab[]).map(tb => (
+              {(['track', 'report', 'calc'] as Tab[]).map(tb => (
                 <button
                   key={tb}
                   onClick={() => setTab(tb)}
@@ -125,7 +126,7 @@ export default function App() {
                     : { background: 'transparent', color: 'var(--ink-dim)', borderColor: 'var(--line)' }
                   }
                 >
-                  {tb === 'track' ? t('tabTrack') : t('tabReport')}
+                  {tb === 'track' ? t('tabTrack') : tb === 'report' ? t('tabReport') : t('tabCalc')}
                 </button>
               ))}
             </div>
@@ -138,6 +139,7 @@ export default function App() {
               </>
             )}
             {tab === 'report' && <Reports />}
+            {tab === 'calc' && <Calculator />}
           </>
         )}
       </div>

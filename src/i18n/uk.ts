@@ -10,6 +10,7 @@ const uk: Dict = {
   saveError: 'Не вдалося зберегти зміни — перевір, чи запущено службу даних.',
   tabTrack: 'Таймер',
   tabReport: 'Звіти',
+  tabCalc: 'Калькулятор',
   themeLight: 'Світла тема',
   themeDark: 'Темна тема',
 
@@ -82,6 +83,7 @@ const uk: Dict = {
   chartCalendar: '⊞ Календар',
   import: '↑ Імпорт',
   csv: '↓ CSV',
+  image: '↓ Картинка',
   importSuccess: 'Імпортовано: {entries} записів, {projects} проєктів',
 
   // Stats cards
@@ -119,6 +121,17 @@ const uk: Dict = {
   importTooManyEntries: 'Забагато записів (максимум {max})',
   importTooManyRows: 'Забагато рядків (максимум {max})',
   importCsvEmpty: 'CSV-файл порожній або не містить даних',
+
+  // Calculator
+  calcProject: 'Проєкт',
+  calcPickProject: 'Оберіть проєкт',
+  calcRate: 'Ставка за годину (USD)',
+  calcFxRate: 'Курс USD → UAH',
+  calcHours: 'Відпрацьовано годин',
+  calcAmountUsd: 'Сума, USD',
+  calcAmountUah: 'Сума, UAH',
+  calcNoData: 'За обраний період немає часу для цього проєкту.',
+  calcSetFxHint: 'Введіть курс для конвертації в UAH.',
 
   // Time units
   unitHour: 'год',
