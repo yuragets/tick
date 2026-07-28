@@ -3,9 +3,10 @@ import { useStore } from '../../store/useStore'
 import { rangeBounds, fmtDate } from '../../utils/time'
 import { projectColor, projectName } from '../../utils/projects'
 import { exportCSV, importFile } from '../../utils/csv'
-import { fieldStyle } from '../../ui'
-import { useT } from '../../i18n'
+import { exportCalendarImage, exportBreakdownImage } from '../../utils/image'
+import { useT, monthName, weekdaysMon } from '../../i18n'
 import type { ChartMode, ReportRange, CustomRange } from '../../types'
+import RangeSelector from './RangeSelector'
 import StatsCards from './StatsCards'
 import ReportChart from './ReportChart'
 import type { ProjPoint, DayPoint } from './ReportChart'
@@ -15,8 +16,8 @@ import ProjectMultiSelect from './ProjectMultiSelect'
 import type { BreakdownItem } from './Breakdown'
 
 export default function Reports() {
-  const { entries, projects, mergeImport } = useStore()
-  const { t } = useT()
+  const { entries, projects, settings, mergeImport } = useStore()
+  const { t, locale } = useT()
 
   const [range, setRange] = useState<ReportRange>('today')
   const [custom, setCustom] = useState<CustomRange>({ from: '', to: '' })
@@ -133,42 +134,36 @@ export default function Reports() {
   const exportEntries = isCalendar ? calEntries : filtered
   const exportLabel = isCalendar ? calLabel : rangeLabel
 
+  function handleExportImage() {
+    if (isCalendar) {
+      exportCalendarImage({
+        entries,
+        projects,
+        month: calMonth,
+        filterProjects: calProjects,
+        title: `${monthName(locale, calMonth.getFullYear(), calMonth.getMonth())} ${calMonth.getFullYear()}`,
+        weekdays: weekdaysMon(locale),
+        totalLabel: t('monthTotal'),
+        showDescriptions: settings.showDescriptions,
+      })
+    } else {
+      const items = chartMode === 'proj' ? breakdownItems : dayBreakdown
+      // Strip the leading icon from the mode label for a clean image title.
+      const title = (chartMode === 'proj' ? t('chartProjects') : t('chartDays'))
+        .replace(/^\S+\s+/, '')
+      exportBreakdownImage({
+        title,
+        items: items.map(i => ({ label: i.label, color: i.color, ms: i.ms })),
+        totalLabel: t('totalTime'),
+      })
+    }
+  }
+
   return (
     <div>
       {/* ── Range selector ── */}
       {!isCalendar && (
-        <div className="flex gap-1.5 flex-wrap mb-3.5">
-          {(['today', 'week', 'month', 'custom'] as ReportRange[]).map(r => (
-            <button
-              key={r}
-              onClick={() => setRange(r)}
-              className="px-4 py-1.5 text-sm rounded-[10px] border transition-all"
-              style={range === r
-                ? { background: 'var(--accent-bg)', borderColor: 'var(--accent)', color: 'var(--accent)' }
-                : { background: 'transparent', borderColor: 'var(--line)', color: 'var(--ink-dim)' }
-              }
-            >
-              {r === 'today' ? t('rangeToday') : r === 'week' ? t('rangeWeek') : r === 'month' ? t('rangeMonth') : t('rangeCustom')}
-            </button>
-          ))}
-        </div>
-      )}
-
-      {/* ── Custom date range ── */}
-      {!isCalendar && range === 'custom' && (
-        <div className="flex items-center gap-2 mb-3.5 flex-wrap">
-          <input type="date" value={custom.from}
-            onChange={e => setCustom(c => ({ ...c, from: e.target.value }))}
-            className="flex-1 px-3 py-2 text-sm rounded-[10px]"
-            style={fieldStyle}
-          />
-          <span style={{ color: 'var(--ink-mute)' }}>→</span>
-          <input type="date" value={custom.to}
-            onChange={e => setCustom(c => ({ ...c, to: e.target.value }))}
-            className="flex-1 px-3 py-2 text-sm rounded-[10px]"
-            style={fieldStyle}
-          />
-        </div>
+        <RangeSelector range={range} onRangeChange={setRange} custom={custom} onCustomChange={setCustom} />
       )}
 
       {/* ── Stats ── */}
@@ -223,6 +218,15 @@ export default function Reports() {
             style={{ background: 'transparent', border: 'none', color: 'var(--accent)', padding: '0' }}
           >
             {t('csv')}
+          </button>
+
+          {/* Export image */}
+          <button
+            onClick={handleExportImage}
+            className="text-sm"
+            style={{ background: 'transparent', border: 'none', color: 'var(--accent)', padding: '0' }}
+          >
+            {t('image')}
           </button>
         </div>
       </div>
