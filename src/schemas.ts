@@ -35,6 +35,8 @@ export const RunningTimerSchema = z.object({
 export const SettingsSchema = z.object({
   showDescriptions: z.boolean().default(true),
   lang: z.enum(['en', 'uk']).default('en'),
+  hourlyRate: z.number().nonnegative().default(0),
+  usdRate: z.number().nonnegative().default(0),
 })
 
 export const AppDataSchema = z.object({

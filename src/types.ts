@@ -29,6 +29,10 @@ export interface Settings {
   showDescriptions: boolean
   /** UI language. */
   lang: Lang
+  /** Calculator: hourly rate in USD. */
+  hourlyRate: number
+  /** Calculator: UAH per 1 USD. */
+  usdRate: number
 }
 
 export interface AppData {

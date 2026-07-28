@@ -31,6 +31,7 @@ interface StoreState extends AppData {
   settings: Settings
   setShowDescriptions: (v: boolean) => void
   setLang: (l: Lang) => void
+  setCalcRates: (patch: { hourlyRate?: number; usdRate?: number }) => void
 
   // Timer
   setActiveProject: (id: string) => void
@@ -170,6 +171,11 @@ export const useStore = create<StoreState>((set, get) => {
     setLang(l) {
       setActiveLang(l)
       set({ settings: { ...get().settings, lang: l } })
+      void persist()
+    },
+
+    setCalcRates(patch) {
+      set({ settings: { ...get().settings, ...patch } })
       void persist()
     },
 

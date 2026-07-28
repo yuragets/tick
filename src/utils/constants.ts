@@ -24,4 +24,6 @@ import type { Settings } from '../types'
 export const DEFAULT_SETTINGS: Settings = {
   showDescriptions: true,
   lang: 'en',
+  hourlyRate: 0,
+  usdRate: 0,
 }
