@@ -68,6 +68,8 @@ const en = {
   editEntry: 'Edit entry',
   description: 'Description',
   tagsComma: 'Tags (comma-separated)',
+  addTag: 'Add tag…',
+  removeTag: 'Remove tag',
   start_: 'Start',
   end_: 'End',
   duration_: 'Duration',

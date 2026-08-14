@@ -68,6 +68,8 @@ const uk: Dict = {
   editEntry: 'Редагувати запис',
   description: 'Опис',
   tagsComma: 'Теги (через кому)',
+  addTag: 'Додати тег…',
+  removeTag: 'Видалити тег',
   start_: 'Початок',
   end_: 'Кінець',
   duration_: 'Тривалість',

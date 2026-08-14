@@ -1,11 +1,12 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useStore } from '../store/useStore'
 import { dtLocal, parseDatetimeLocal, hms, parseHms } from '../utils/time'
-import { parseTags } from '../utils/sanitize'
+import { collectTags } from '../utils/tags'
 import { MAX_DESC_LEN } from '../utils/constants'
 import { fieldStyle } from '../ui'
 import { useT } from '../i18n'
 import { registerEditOpener } from './EntryList'
+import TagInput from './TagInput'
 import Modal from './Modal'
 
 export default function EntryEditModal() {
@@ -15,7 +16,7 @@ export default function EntryEditModal() {
 
   const [desc, setDesc] = useState('')
   const [projectId, setProjectId] = useState('')
-  const [tagsRaw, setTagsRaw] = useState('')
+  const [tags, setTags] = useState<string[]>([])
   const [startStr, setStartStr] = useState('')
   const [endStr, setEndStr] = useState('')
   const [durStr, setDurStr] = useState('')
@@ -28,7 +29,7 @@ export default function EntryEditModal() {
       setEditId(id)
       setDesc(entry.desc)
       setProjectId(entry.projectId)
-      setTagsRaw(entry.tags.join(', '))
+      setTags(entry.tags)
       setStartStr(dtLocal(entry.start))
       setEndStr(dtLocal(entry.end))
       setDurStr(hms(entry.end - entry.start))
@@ -67,7 +68,7 @@ export default function EntryEditModal() {
     updateEntry(editId, {
       desc: desc.trim().slice(0, MAX_DESC_LEN),
       projectId,
-      tags: parseTags(tagsRaw),
+      tags,
       start,
       end,
     })
@@ -77,6 +78,11 @@ export default function EntryEditModal() {
   function handleClose() {
     setEditId(null)
   }
+
+  const tagSuggestions = useMemo(
+    () => collectTags(entries, projectId),
+    [entries, projectId],
+  )
 
   if (!editId) return null
 
@@ -123,13 +129,7 @@ export default function EntryEditModal() {
           <label className="block text-xs mb-1" style={{ color: 'var(--ink-mute)' }}>
             {t('tagsComma')}
           </label>
-          <input
-            type="text"
-            value={tagsRaw}
-            onChange={e => setTagsRaw(e.target.value)}
-            className="w-full px-3 py-2 rounded-[10px] text-sm"
-            style={fieldStyle}
-          />
+          <TagInput value={tags} onChange={setTags} suggestions={tagSuggestions} />
         </div>
 
         {/* Start / End */}

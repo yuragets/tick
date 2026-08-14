@@ -1,21 +1,27 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useStore } from '../store/useStore'
 import { useTimer } from '../hooks/useTimer'
-import { parseTags } from '../utils/sanitize'
+import { collectTags } from '../utils/tags'
 import { MAX_DESC_LEN } from '../utils/constants'
 import { hms, timeInput, applyTimeOfDay } from '../utils/time'
 import { fieldStyle } from '../ui'
 import { useT } from '../i18n'
+import TagInput from './TagInput'
 
 export default function Timer() {
-  const { running, projects, activeProjectId, startTimer, stopTimer, pauseTimer, resumeTimer, setActiveProject, updateRunning } = useStore()
+  const { running, projects, entries, activeProjectId, startTimer, stopTimer, pauseTimer, resumeTimer, setActiveProject, updateRunning } = useStore()
   const { t } = useT()
   const display = useTimer()
   const paused = running?.pausedAt != null
 
   const [desc, setDesc] = useState('')
-  const [tagsRaw, setTagsRaw] = useState('')
+  const [tags, setTags] = useState<string[]>([])
   const [projId, setProjId] = useState(activeProjectId)
+
+  const tagSuggestions = useMemo(
+    () => collectTags(entries, projId),
+    [entries, projId],
+  )
 
   // Inline "adjust start time" form (only meaningful while running)
   const [editing, setEditing] = useState(false)
@@ -32,7 +38,7 @@ export default function Timer() {
   useEffect(() => {
     if (running) {
       setDesc(running.desc)
-      setTagsRaw(running.tags.join(', '))
+      setTags(running.tags)
       setProjId(running.projectId)
     }
   }, [running])
@@ -41,10 +47,10 @@ export default function Timer() {
     if (running) {
       stopTimer()
       setDesc('')
-      setTagsRaw('')
+      setTags([])
       setEditing(false)
     } else {
-      startTimer(desc.trim().slice(0, MAX_DESC_LEN), projId, parseTags(tagsRaw))
+      startTimer(desc.trim().slice(0, MAX_DESC_LEN), projId, tags)
       setActiveProject(projId)
     }
   }
@@ -112,14 +118,12 @@ export default function Timer() {
 
       {/* Row 2: Tags */}
       <div className="mb-4">
-        <input
-          type="text"
-          placeholder={t('tagsPlaceholder')}
-          value={tagsRaw}
-          onChange={e => setTagsRaw(e.target.value)}
+        <TagInput
+          value={tags}
+          onChange={setTags}
+          suggestions={tagSuggestions}
           disabled={!!running}
-          className="w-full px-3 py-2.5 rounded-[10px] text-sm transition-colors"
-          style={fieldStyle}
+          placeholder={t('tagsPlaceholder')}
         />
       </div>
 
