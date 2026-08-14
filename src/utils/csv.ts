@@ -18,6 +18,12 @@ function quoteCell(value: string): string {
   return `"${safe.replace(/"/g, '""')}"`
 }
 
+// Decimal hours from milliseconds, rounded to 2 places with trailing zeros
+// trimmed (1h30m → "1.5", 2h → "2", 1h05m → "1.08").
+function fmtHours(ms: number): string {
+  return String(parseFloat((ms / 3_600_000).toFixed(2)))
+}
+
 export function exportCSV(entries: Entry[], projects: Project[], rangeLabel: string): void {
   if (!entries.length) {
     alert(t('csvNoEntries'))
@@ -48,17 +54,17 @@ export function exportCSV(entries: Entry[], projects: Project[], rangeLabel: str
 
   const rows = [...groups.values()].sort((a, b) => a.start - b.start).map(g => [
     quoteCell(projectName(projects, g.projectId)),
-    quoteCell((g.ms / 3_600_000).toFixed(2)),
+    quoteCell(fmtHours(g.ms)),
     quoteCell(fmtDMY(g.start)),
     quoteCell([...g.tags].join('; ')),
     quoteCell(g.descs.join(' · ')),
   ])
 
   // Total time across all exported entries (as a trailing summary row).
-  const totalHours = entries.reduce((s, e) => s + (e.end - e.start), 0) / 3_600_000
+  const totalMs = entries.reduce((s, e) => s + (e.end - e.start), 0)
   const totalRow = [
     quoteCell(t('totalTime')),
-    quoteCell(totalHours.toFixed(2)),
+    quoteCell(fmtHours(totalMs)),
     quoteCell(''), quoteCell(''), quoteCell(''),
   ]
 
