@@ -36,7 +36,7 @@ interface StoreState extends AppData {
   // Timer
   setActiveProject: (id: string) => void
   startTimer: (desc: string, projectId: string, tags: string[]) => void
-  updateRunning: (patch: Partial<Pick<RunningTimer, 'start' | 'projectId'>>) => void
+  updateRunning: (patch: Partial<Pick<RunningTimer, 'start' | 'projectId' | 'desc' | 'tags'>>) => void
   pauseTimer: () => void
   resumeTimer: () => void
   stopTimer: () => void

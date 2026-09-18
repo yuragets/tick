@@ -55,6 +55,11 @@ export default function Timer() {
     }
   }
 
+  function handleDescChange(v: string) {
+    setDesc(v)
+    if (running) updateRunning({ desc: v.slice(0, MAX_DESC_LEN) })
+  }
+
   function handleProjChange(id: string) {
     setProjId(id)
     setActiveProject(id)
@@ -94,8 +99,7 @@ export default function Timer() {
           placeholder={t('descPlaceholder')}
           maxLength={MAX_DESC_LEN}
           value={desc}
-          onChange={e => setDesc(e.target.value)}
-          disabled={!!running}
+          onChange={e => handleDescChange(e.target.value)}
           className="flex-[2] min-w-[170px] px-3 py-2.5 rounded-[10px] text-sm transition-colors"
           style={fieldStyle}
         />
