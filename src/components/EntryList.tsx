@@ -1,9 +1,9 @@
 import { useState } from 'react'
 import { useStore } from '../store/useStore'
 import { projectColor, projectName } from '../utils/projects'
-import { hms, fmtDateTime } from '../utils/time'
+import { hms, hm, fmtDateTime } from '../utils/time'
 import { useConfirm } from '../hooks/useConfirm'
-import { useT } from '../i18n'
+import { useT, monthName } from '../i18n'
 
 // Global modal state — shared via module-level setter
 let _openEditModal: ((id: string) => void) | null = null
@@ -12,7 +12,12 @@ export function registerEditOpener(fn: (id: string) => void) { _openEditModal = 
 
 export default function EntryList() {
   const { entries, projects, deleteEntry, settings } = useStore()
-  const { t } = useT()
+  const { t, locale } = useT()
+  // First day of the month being viewed; defaults to the current month.
+  const [viewDate, setViewDate] = useState(() => {
+    const now = new Date()
+    return new Date(now.getFullYear(), now.getMonth(), 1)
+  })
   const [filterProject, setFilterProject] = useState<string>('all')
   const [filterTag, setFilterTag] = useState('')
   // Two-click delete confirmation to avoid accidental removals.
@@ -25,11 +30,74 @@ export default function EntryList() {
   // Collect all unique tags
   const allTags = Array.from(new Set(entries.flatMap(e => e.tags))).sort()
 
+  const year = viewDate.getFullYear()
+  const month = viewDate.getMonth()
+  const monthStart = viewDate.getTime()
+  const monthEnd = new Date(year, month + 1, 1).getTime()
+  const now = new Date()
+  const isCurrentMonth = year === now.getFullYear() && month === now.getMonth()
+
+  const prev = new Date(year, month - 1, 1)
+  const next = new Date(year, month + 1, 1)
+  // Neighbour labels carry the year only when it differs from the viewed one.
+  const navLabel = (d: Date) =>
+    monthName(locale, d.getFullYear(), d.getMonth()) + (d.getFullYear() !== year ? ` ${d.getFullYear()}` : '')
+
   const filtered = entries
+    .filter(e => e.start >= monthStart && e.start < monthEnd)
     .filter(e => filterProject === 'all' || e.projectId === filterProject)
     .filter(e => !filterTag || e.tags.includes(filterTag))
     .sort((a, b) => b.end - a.end)
-    .slice(0, 50)
+
+  const monthTotal = filtered.reduce((sum, e) => sum + (e.end - e.start), 0)
+
+  // Month navigation: neighbour month names instead of prev/next.
+  // Rendered above and below the list.
+  const MonthNav = () => (
+    <div className="flex items-center justify-between gap-2 my-2.5">
+      <button
+        onClick={() => setViewDate(prev)}
+        className="px-3 h-8 text-xs rounded-lg whitespace-nowrap"
+        style={navBtnStyle}
+      >
+        ‹ {navLabel(prev)}
+      </button>
+      <div className="text-center min-w-0">
+        <span className="font-semibold text-sm" style={{ color: 'var(--ink)' }}>
+          {monthName(locale, year, month)} {year}
+        </span>
+        {monthTotal > 0 && (
+          <span className="text-xs ml-2" style={{ color: 'var(--ink-mute)' }}>
+            · {hm(monthTotal)}
+          </span>
+        )}
+        {!isCurrentMonth && (
+          <button
+            onClick={() => setViewDate(new Date(now.getFullYear(), now.getMonth(), 1))}
+            className="px-2.5 h-7 text-xs rounded-lg ml-2"
+            style={navBtnStyle}
+          >
+            {t('today')}
+          </button>
+        )}
+      </div>
+      {/* No navigating past the current month; keep the slot to hold layout */}
+      <button
+        onClick={() => setViewDate(next)}
+        className={`px-3 h-8 text-xs rounded-lg whitespace-nowrap ${isCurrentMonth ? 'invisible' : ''}`}
+        style={navBtnStyle}
+        disabled={isCurrentMonth}
+      >
+        {navLabel(next)} ›
+      </button>
+    </div>
+  )
+
+  const navBtnStyle = {
+    background: 'var(--panel-2)',
+    border: '1px solid var(--line)',
+    color: 'var(--ink-dim)',
+  }
 
   return (
     <div>
@@ -79,6 +147,8 @@ export default function EntryList() {
         )}
       </div>
 
+      <MonthNav />
+
       <div
         className="rounded-card"
         style={{
@@ -92,7 +162,9 @@ export default function EntryList() {
             className="text-sm text-center py-4"
             style={{ color: 'var(--ink-mute)' }}
           >
-            {entries.length === 0 ? t('emptyStart') : t('emptyFiltered')}
+            {entries.length === 0
+              ? t('emptyStart')
+              : filterProject !== 'all' || filterTag ? t('emptyFiltered') : t('emptyMonth')}
           </p>
         ) : (
           <ul>
@@ -180,11 +252,7 @@ export default function EntryList() {
         )}
       </div>
 
-      {entries.length > 50 && (
-        <p className="text-xs text-center mt-2" style={{ color: 'var(--ink-mute)' }}>
-          {t('showingLast50')}
-        </p>
-      )}
+      {filtered.length > 0 && <MonthNav />}
     </div>
   )
 }

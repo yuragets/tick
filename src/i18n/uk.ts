@@ -62,7 +62,7 @@ const uk: Dict = {
   emptyFiltered: 'Немає записів за обраними фільтрами.',
   noDescription: 'Без опису',
   edit: 'Редагувати',
-  showingLast50: 'Показано останні 50 записів. Повний список доступний через експорт CSV.',
+  emptyMonth: 'Немає записів за цей місяць.',
 
   // Entry edit modal
   editEntry: 'Редагувати запис',

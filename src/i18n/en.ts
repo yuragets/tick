@@ -62,7 +62,7 @@ const en = {
   emptyFiltered: 'No entries match the selected filters.',
   noDescription: 'No description',
   edit: 'Edit',
-  showingLast50: 'Showing the last 50 entries. The full list is available via CSV export.',
+  emptyMonth: 'No entries for this month.',
 
   // Entry edit modal
   editEntry: 'Edit entry',
