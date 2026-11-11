@@ -135,6 +135,25 @@ const en = {
   calcNoData: 'No tracked time for this project in the selected period.',
   calcSetFxHint: 'Enter a rate to convert to UAH.',
 
+  // Local (browser-only) mode
+  appSubtitleLocal: 'Personal time tracker · data stays in this browser',
+  saveErrorLocal: 'Could not save changes — browser storage is full or blocked. Export a backup and free up some space.',
+  welcomeTitle: 'Track your time, simply',
+  welcomeText: 'Start a timer, sort work into projects and tags, and see where the hours went in reports and a calendar.',
+  welcomePrivacy: 'No account, no server — everything is saved in this browser.',
+  welcomeDemo: 'Load demo data',
+  welcomeDemoHint: 'A week of sample entries in 3 projects. Remove them with one click.',
+  welcomeFresh: 'Start from scratch',
+  welcomeImport: 'or import a backup',
+  demoBanner: 'You are looking at demo data.',
+  demoRemove: 'Remove demo data',
+  demoRemoveConfirm: 'Click again to remove',
+  storageNotice: 'Your data lives only in this browser. Clearing site data or switching devices loses it — export a backup now and then.',
+  exportBackup: '↓ Export backup',
+  dismiss: 'Dismiss',
+  dataSection: 'Data',
+  dataSectionHint: 'Stored only in this browser',
+
   // Time units
   unitHour: 'h',
   unitMinute: 'm',

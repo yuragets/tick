@@ -8,6 +8,8 @@ import EntryEditModal from './components/EntryEditModal'
 import SettingsModal from './components/SettingsModal'
 import Reports from './components/reports/Reports'
 import Calculator from './components/Calculator'
+import { Welcome, DemoBanner, StorageNotice } from './components/LocalMode'
+import { LOCAL_MODE } from './config'
 
 type Tab = 'track' | 'report' | 'calc'
 
@@ -56,6 +58,7 @@ export default function App() {
   const status = useStore(s => s.status)
   const errorMessage = useStore(s => s.errorMessage)
   const saveError = useStore(s => s.saveError)
+  const firstRun = useStore(s => s.firstRun)
   const hydrate = useStore(s => s.hydrate)
   const { t } = useT()
 
@@ -69,7 +72,7 @@ export default function App() {
       <div className="max-w-[896px] mx-auto px-4 py-6">
         <Header onOpenSettings={() => setSettingsOpen(true)} />
         <p className="text-sm mb-6" style={{ color: 'var(--ink-mute)' }}>
-          {t('appSubtitle')}
+          {LOCAL_MODE ? t('appSubtitleLocal') : t('appSubtitle')}
         </p>
 
         {/* Loading */}
@@ -101,8 +104,11 @@ export default function App() {
           </div>
         )}
 
+        {/* First visit (local mode): welcome screen instead of the app */}
+        {status === 'ready' && firstRun && <Welcome />}
+
         {/* Ready */}
-        {status === 'ready' && (
+        {status === 'ready' && !firstRun && (
           <>
             {/* Save error banner */}
             {saveError && (
@@ -110,9 +116,12 @@ export default function App() {
                 className="rounded-[10px] px-3 py-2 mb-4 text-sm"
                 style={{ background: 'var(--danger-bg)', border: '1px solid var(--danger)', color: 'var(--danger)' }}
               >
-                {t('saveError')}
+                {LOCAL_MODE ? t('saveErrorLocal') : t('saveError')}
               </div>
             )}
+
+            {LOCAL_MODE && <StorageNotice />}
+            {LOCAL_MODE && <DemoBanner />}
 
             {/* Tabs */}
             <div className="flex gap-1.5 mb-5">

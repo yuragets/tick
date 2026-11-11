@@ -1,6 +1,7 @@
 import type { StorageAdapter } from './StorageAdapter'
 import { ApiAdapter } from './ApiAdapter'
 import { LocalStorageAdapter } from './LocalStorageAdapter'
+import { LOCAL_MODE } from '../config'
 
 /**
  * Single place that decides which persistence backend the app uses.
@@ -12,7 +13,7 @@ import { LocalStorageAdapter } from './LocalStorageAdapter'
  * static hosting without a backend (e.g. GitHub Pages).
  */
 export function createStorageAdapter(): StorageAdapter {
-  if (import.meta.env.VITE_STORAGE === 'local') return new LocalStorageAdapter()
+  if (LOCAL_MODE) return new LocalStorageAdapter()
   return new ApiAdapter()
 }
 

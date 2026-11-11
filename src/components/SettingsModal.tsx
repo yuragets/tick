@@ -2,6 +2,8 @@ import { useStore } from '../store/useStore'
 import { useT } from '../i18n'
 import type { Lang } from '../types'
 import Modal from './Modal'
+import { BackupActions } from './LocalMode'
+import { LOCAL_MODE } from '../config'
 
 interface Props {
   onClose: () => void
@@ -65,6 +67,19 @@ export default function SettingsModal({ onClose }: Props) {
             </span>
           </span>
         </label>
+
+        {/* Backup (local mode: data lives only in this browser) */}
+        {LOCAL_MODE && (
+          <div className="py-2 mt-1" style={{ borderTop: '1px solid var(--line)' }}>
+            <span className="text-sm block mt-2" style={{ color: 'var(--ink)' }}>
+              {t('dataSection')}
+            </span>
+            <span className="text-xs block mb-2" style={{ color: 'var(--ink-dim)' }}>
+              {t('dataSectionHint')}
+            </span>
+            <BackupActions />
+          </div>
+        )}
 
         <div className="flex justify-end mt-5">
           <button

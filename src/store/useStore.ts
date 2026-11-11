@@ -5,6 +5,8 @@ import { readLegacyData, hasLegacyData, isBackendEmpty } from '../storage/migrat
 import { DEFAULT_SETTINGS } from '../utils/constants'
 import { runningElapsed } from '../utils/time'
 import { t, setActiveLang } from '../i18n'
+import { LOCAL_MODE } from '../config'
+import { buildDemoData, isDemoId } from '../utils/demo'
 
 const adapter = createStorageAdapter()
 
@@ -20,6 +22,8 @@ interface StoreState extends AppData {
   status: Status
   errorMessage: string | null
   saveError: boolean
+  /** Local mode only: storage is empty and the user hasn't picked a start yet. */
+  firstRun: boolean
 
   // Init
   hydrate: () => Promise<void>
@@ -52,6 +56,11 @@ interface StoreState extends AppData {
 
   // Import
   mergeImport: (projects: Project[], entries: Entry[]) => void
+
+  // First run / demo data (local mode)
+  loadDemo: () => void
+  startFresh: () => void
+  removeDemo: () => void
 }
 
 export const useStore = create<StoreState>((set, get) => {
@@ -99,6 +108,7 @@ export const useStore = create<StoreState>((set, get) => {
     status: 'loading',
     errorMessage: null,
     saveError: false,
+    firstRun: false,
 
     async hydrate() {
       set({ status: 'loading', errorMessage: null })
@@ -131,6 +141,10 @@ export const useStore = create<StoreState>((set, get) => {
               // mutation will retry persisting it.
             }
             applyLoaded(legacy)
+          } else if (LOCAL_MODE) {
+            // Fresh browser — show the welcome screen, nothing is saved
+            // until the user picks demo data or an empty start.
+            set({ status: 'ready', firstRun: true })
           } else {
             // Truly fresh install — seed a default project and persist once.
             set({
@@ -294,6 +308,43 @@ export const useStore = create<StoreState>((set, get) => {
       set({
         projects: [...projects, ...projectsToAdd],
         entries: [...entriesToAdd, ...entries],
+        firstRun: false,
+      })
+      void persist()
+    },
+
+    loadDemo() {
+      const { projects, entries } = buildDemoData()
+      set({ projects, entries, running: null, activeProjectId: projects[0]!.id, firstRun: false })
+      void persist()
+    },
+
+    startFresh() {
+      set({
+        projects: [DEFAULT_PROJECT],
+        entries: [],
+        running: null,
+        activeProjectId: DEFAULT_PROJECT.id,
+        firstRun: false,
+      })
+      void persist()
+    },
+
+    removeDemo() {
+      const { projects, entries, running, activeProjectId } = get()
+      const kept = projects.filter(p => !isDemoId(p.id))
+      const nextProjects = kept.length ? kept : [DEFAULT_PROJECT]
+      const fallback = nextProjects[0]!.id
+      // Entries tracked into a demo project go together with it.
+      const nextEntries = entries.filter(e => !isDemoId(e.id) && !isDemoId(e.projectId))
+      const nextRunning = running && isDemoId(running.projectId)
+        ? { ...running, projectId: fallback }
+        : running
+      set({
+        projects: nextProjects,
+        entries: nextEntries,
+        running: nextRunning,
+        activeProjectId: isDemoId(activeProjectId) ? fallback : activeProjectId,
       })
       void persist()
     },

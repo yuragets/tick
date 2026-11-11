@@ -1,4 +1,4 @@
-import type { Entry, Project } from '../types'
+import type { AppData, Entry, Project } from '../types'
 import { AppDataSchema } from '../schemas'
 import { sanitizeCsvCell } from './sanitize'
 import { projectName } from './projects'
@@ -79,6 +79,18 @@ export function exportCSV(entries: Entry[], projects: Project[], rangeLabel: str
   const a = document.createElement('a')
   a.href = url
   a.download = `tick-${rangeLabel}-${new Date().toISOString().slice(0, 10)}.csv`
+  a.click()
+  URL.revokeObjectURL(url)
+}
+
+/** Full backup in the Tick JSON format — re-importable via importFile(). */
+export function exportJSON(data: AppData): void {
+  const json = JSON.stringify({ ...data, running: null }, null, 2)
+  const blob = new Blob([json], { type: 'application/json' })
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = `tick-backup-${new Date().toISOString().slice(0, 10)}.json`
   a.click()
   URL.revokeObjectURL(url)
 }
