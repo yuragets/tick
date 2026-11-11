@@ -29,6 +29,13 @@ export function hm(ms: number): string {
   return `${Math.floor(m / 60)}${t('unitHour')} ${m % 60}${t('unitMinute')}`
 }
 
+/** Compact duration for tight spaces: "8h24", or "35m" under an hour. */
+export function hmCompact(ms: number): string {
+  const m = Math.round(ms / 60_000)
+  if (m < 60) return `${m}${t('unitMinute')}`
+  return `${Math.floor(m / 60)}${t('unitHour')}${pad(m % 60)}`
+}
+
 /** Local time-of-day as "HH:MM", for a native <input type="time">. */
 export function timeInput(ms: number): string {
   const d = new Date(ms)

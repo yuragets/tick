@@ -99,6 +99,9 @@ const uk: Dict = {
   // Calendar
   today: 'Сьогодні',
   monthTotal: 'Усього за місяць:',
+  dayDetailsClose: 'Закрити',
+  dayEntriesCount: 'Записів: {count}',
+  dayCellLabel: '{date}: {total} — показати деталі',
 
   // Settings
   settings: 'Налаштування',

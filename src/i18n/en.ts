@@ -99,6 +99,9 @@ const en = {
   // Calendar
   today: 'Today',
   monthTotal: 'Month total:',
+  dayDetailsClose: 'Close',
+  dayEntriesCount: 'Entries: {count}',
+  dayCellLabel: '{date}: {total} tracked — show details',
 
   // Settings
   settings: 'Settings',

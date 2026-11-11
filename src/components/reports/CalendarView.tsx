@@ -1,9 +1,10 @@
-import { useMemo } from 'react'
+import { useMemo, useState, type CSSProperties } from 'react'
 import { useStore } from '../../store/useStore'
 import { projectColor, projectName } from '../../utils/projects'
-import { hm } from '../../utils/time'
+import { hm, hmCompact } from '../../utils/time'
 import { useT, monthName, weekdaysMon } from '../../i18n'
 import ProjectMultiSelect from './ProjectMultiSelect'
+import DayDetails from './DayDetails'
 
 function isoWeekday(date: Date): number {
   return (date.getDay() + 6) % 7
@@ -75,6 +76,7 @@ export default function CalendarView({
 
   const today = new Date()
   const setViewDate = onViewDateChange
+  const [openDay, setOpenDay] = useState<Date | null>(null)
 
   const year = viewDate.getFullYear()
   const month = viewDate.getMonth()
@@ -215,32 +217,33 @@ export default function CalendarView({
       {/* Grid */}
       <div className="grid grid-cols-7 gap-1">
         {gridDays.map((day, i) => {
-          if (!day) return <div key={`e-${i}`} style={{ minHeight: 120 }} />
+          if (!day) return <div key={`e-${i}`} className="min-h-[52px] sm:min-h-[120px]" />
 
           const key = dayKey(day)
           const totalMs = dayTotalMap.get(key) ?? 0
           const projData = dayProjMap.get(key) ?? new Map<string, number>()
           const isToday = key === todayKey
           const intensity = maxMs > 0 && totalMs > 0 ? totalMs / maxMs : 0
-
-          const bg = totalMs > 0
-            ? cellBackground(projData, projects, intensity)
-            : 'var(--panel-2)'
-
-          // Project color dots when multiple projects are tracked that day
-          const projDots = projData.size > 1
-            ? Array.from(projData.entries())
-                .sort((a, b) => b[1] - a[1])
-                .slice(0, 4)
-                .map(([pid]) => projectColor(projects, pid))
-            : []
-
-          const textOnBg = intensity > 0.45
+          const byShare = Array.from(projData.entries()).sort((a, b) => b[1] - a[1])
 
           // Border: today uses dominant project color, else default
-          const dominantColor = projData.size > 0
-            ? projectColor(projects, Array.from(projData.entries()).sort((a, b) => b[1] - a[1])[0]![0])
+          const dominantColor = byShare.length > 0
+            ? projectColor(projects, byShare[0]![0])
             : 'var(--accent)'
+
+          // Desktop: proportional fill; phones: flat tint of the dominant
+          // project (see .cal-cell in index.css).
+          const cellVars = totalMs > 0
+            ? {
+                '--cell-bg': cellBackground(projData, projects, intensity),
+                '--cell-bg-m': `color-mix(in srgb, ${dominantColor} ${Math.round((0.12 + intensity * 0.33) * 100)}%, var(--panel-2))`,
+              }
+            : {}
+
+          // Project color dots: always on phones, only for 2+ projects on desktop
+          const projDots = byShare.slice(0, 4).map(([pid]) => projectColor(projects, pid))
+
+          const textOnBg = intensity > 0.45
 
           const descs = dayDescMap.get(key) ?? []
           // Join all entries of the day into one flowing text and cut it to
@@ -251,17 +254,14 @@ export default function CalendarView({
             ? fullDesc.slice(0, MAX_DESC_CHARS).trimEnd() + '…'
             : fullDesc
 
-          return (
-            <div
-              key={key}
-              className="rounded-lg p-2 flex flex-col justify-between gap-1 overflow-hidden"
-              style={{
-                // Each cell is at least 120×120; grows taller if needed.
-                minHeight: 120,
-                background: bg,
-                border: isToday ? `2px solid ${dominantColor}` : '1px solid var(--line)',
-              }}
-            >
+          const cellClass = 'cal-cell rounded-lg p-1.5 sm:p-2 flex flex-col justify-between gap-1 overflow-hidden text-left min-h-[52px] sm:min-h-[120px]'
+          const cellStyle = {
+            ...cellVars,
+            border: isToday ? `2px solid ${dominantColor}` : '1px solid var(--line)',
+          } as CSSProperties
+
+          const content = (
+            <>
               {/* Day number — always readable: bright on any fill, accent on
                   an empty "today", muted on empty days. (Previously used the
                   project color on a same-colored fill → invisible.) */}
@@ -276,38 +276,62 @@ export default function CalendarView({
                 {day.getDate()}
               </span>
 
-              {/* Descriptions: only when a single project is tracked that day.
-                  With 2+ projects the day shows color dots instead (below). */}
+              {/* Descriptions (desktop only): only when a single project is
+                  tracked that day. With 2+ projects the day shows color dots. */}
               {showDescriptions && shownDesc && projData.size === 1 && (
                 <div
-                  className="flex-1 min-h-0 overflow-hidden text-[11px] leading-tight break-words line-clamp-5"
+                  className="hidden sm:block flex-1 min-h-0 overflow-hidden text-[11px] leading-tight break-words line-clamp-5"
                   style={{ color: textOnBg ? 'var(--ink)' : 'var(--ink-dim)' }}
-                  title={fullDesc}
                 >
                   {shownDesc}
                 </div>
               )}
 
-              <div>
-                {/* Project dots for multi-project days */}
-                {projDots.length > 0 && (
-                  <div className="flex gap-0.5 mb-0.5">
+              {totalMs > 0 && (
+                <div>
+                  <div className={`gap-0.5 mb-0.5 ${projDots.length > 1 ? 'flex' : 'flex sm:hidden'}`}>
                     {projDots.map((c, idx) => (
                       <span key={idx} className="w-1.5 h-1.5 rounded-full" style={{ background: c }} />
                     ))}
                   </div>
-                )}
 
-                {/* Hours */}
-                {totalMs > 0 && (
+                  {/* Hours: compact "8h24" on phones, "8h 24m" on desktop */}
                   <span
-                    className="text-[10px] font-mono tabular-nums leading-none block text-right"
+                    className="sm:hidden text-[10px] font-mono tabular-nums leading-none block font-medium"
+                    style={{ color: 'var(--ink)' }}
+                  >
+                    {hmCompact(totalMs)}
+                  </span>
+                  <span
+                    className="hidden sm:block text-[10px] font-mono tabular-nums leading-none text-right"
                     style={{ color: textOnBg ? 'var(--ink)' : dominantColor, fontWeight: 500 }}
                   >
                     {hm(totalMs)}
                   </span>
-                )}
-              </div>
+                </div>
+              )}
+            </>
+          )
+
+          // Days with entries are buttons (focusable, Enter/Space open details).
+          return totalMs > 0 ? (
+            <button
+              key={key}
+              type="button"
+              onClick={() => setOpenDay(day)}
+              className={cellClass}
+              style={cellStyle}
+              aria-label={t('dayCellLabel', {
+                date: day.toLocaleDateString(locale, { day: 'numeric', month: 'long' }),
+                total: hm(totalMs),
+              })}
+              title={showDescriptions && fullDesc ? fullDesc : undefined}
+            >
+              {content}
+            </button>
+          ) : (
+            <div key={key} className={cellClass} style={cellStyle}>
+              {content}
             </div>
           )
         })}
@@ -327,6 +351,16 @@ export default function CalendarView({
             </div>
           ))}
         </div>
+      )}
+
+      {openDay && (
+        <DayDetails
+          date={openDay}
+          entries={entries.filter(e =>
+            dayKey(new Date(e.start)) === dayKey(openDay) &&
+            (filterProjects.length === 0 || filterProjects.includes(e.projectId)))}
+          onClose={() => setOpenDay(null)}
+        />
       )}
 
       {/* Month total */}

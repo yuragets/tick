@@ -96,3 +96,19 @@ input[type="datetime-local"]::-webkit-calendar-picker-indicator {
 .dark input[type="datetime-local"]::-webkit-calendar-picker-indicator {
   filter: invert(0.85);
 }
+
+/* ── Calendar day cells ──
+   Background comes from inline custom properties: desktop keeps the
+   proportional (diagonal) project fill, phones get a flat tint so the
+   number and time stay readable in ~50px cells. */
+.cal-cell { background: var(--cell-bg-m, var(--panel-2)); }
+@media (min-width: 640px) {
+  .cal-cell { background: var(--cell-bg, var(--panel-2)); }
+}
+button.cal-cell { cursor: pointer; transition: filter .15s, transform .15s; }
+button.cal-cell:hover { filter: brightness(1.12); }
+button.cal-cell:active { transform: scale(.97); }
+
+/* Day details bottom sheet */
+@keyframes sheet-up { from { transform: translateY(100%); } }
+.day-sheet { animation: sheet-up .22s ease-out; }
