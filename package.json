@@ -8,7 +8,9 @@
     "dev:web": "vite",
     "dev:server": "npm --prefix server run dev",
     "build": "tsc -b && vite build",
+    "build:pages": "VITE_STORAGE=local npm run build -- --base=/tick/",
     "preview": "vite preview",
+    "preview:pages": "vite preview --base=/tick/",
     "setup": "npm install && npm --prefix server install"
   },
   "dependencies": {
