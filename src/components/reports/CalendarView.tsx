@@ -280,7 +280,7 @@ export default function CalendarView({
                   tracked that day. With 2+ projects the day shows color dots. */}
               {showDescriptions && shownDesc && projData.size === 1 && (
                 <div
-                  className="hidden sm:block flex-1 min-h-0 overflow-hidden text-[11px] leading-tight break-words line-clamp-5"
+                  className="max-sm:hidden flex-1 min-h-0 overflow-hidden text-[11px] leading-tight break-words line-clamp-5"
                   style={{ color: textOnBg ? 'var(--ink)' : 'var(--ink-dim)' }}
                 >
                   {shownDesc}
