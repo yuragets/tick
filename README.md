@@ -4,7 +4,9 @@ A minimal personal time tracker: timer, projects, tags, reports and a calendar.
 
 **[Live demo →](https://yuragets.github.io/tick/)**
 
-<!-- Demo GIF goes here: ![Tick demo](docs/demo.gif) -->
+![Tick demo: calendar view and day details](media/demo.gif)
+
+<!-- Full demo video (media/demo.mp4): drag it into the GitHub editor here -->
 
 ## Features
 
@@ -36,6 +38,7 @@ npm run dev     # web app on :5173, API on :3001
 - Data file: `server/data/tracker.db` — created on first run, ignored by git
 - `PORT` sets the backend port; `VITE_API_URL` points the frontend elsewhere
 - `npm run build:pages` builds the browser-only version served on GitHub Pages
+- `npm run record:demo` re-records `media/` (demo video, GIF, poster); needs Google Chrome
 - After cloning, run `git config core.hooksPath .githooks` to enable the repo's git hooks
 
 ## Tech stack
