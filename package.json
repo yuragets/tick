@@ -11,7 +11,8 @@
     "build:pages": "VITE_STORAGE=local npm run build -- --base=/tick/",
     "preview": "vite preview",
     "preview:pages": "vite preview --base=/tick/",
-    "setup": "npm install && npm --prefix server install"
+    "setup": "npm install && npm --prefix server install",
+    "record:demo": "npm run build:pages && npm --prefix scripts/record-demo install --no-audit --no-fund && node scripts/record-demo/record.mjs"
   },
   "dependencies": {
     "react": "^18.3.1",

@@ -5,6 +5,9 @@ node_modules/
 dist/
 dist-ssr/
 
+# Demo video: uploaded to GitHub separately, too big for the repo
+media/*.mp4
+
 # Backend SQLite database (local data — never commit)
 server/data/
 
