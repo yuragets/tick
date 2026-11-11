@@ -1,111 +1,49 @@
-# Tick — personal time tracker
+# Tick
 
-A time tracker with projects, tags, reports, a calendar and charts. Data is
-stored **locally on your machine** in a SQLite file — the frontend talks to a
-local backend service over HTTP. Nothing goes to the cloud.
+A minimal personal time tracker: timer, projects, tags, reports and a calendar.
 
-## Stack
+**[Live demo →](https://yuragets.github.io/tick/)**
 
-**Frontend**
-- **React 18** + **TypeScript**
-- **Vite 5** — bundler
-- **Zustand** — state management
-- **Tailwind CSS** — styling
-- **Recharts** — charts
-- **Zod** — data validation
-
-**Backend** (`server/`)
-- **Express 4** + **TypeScript** (run via `tsx`, no build step)
-- **better-sqlite3** — SQLite storage
-- **Zod** — server-side validation
-
-## Storage architecture
-
-```
-React (browser)
-   └── ApiAdapter ──HTTP──> Express (localhost:3001)
-                                └── better-sqlite3 ──> server/data/tracker.db
-```
-
-The storage layer is abstracted behind a `StorageAdapter` interface. `ApiAdapter`
-is currently active (talks to the backend). `LocalStorageAdapter` is kept as a
-fallback and as the source for the one-time migration of old browser data.
+<!-- Demo GIF goes here: ![Tick demo](docs/demo.gif) -->
 
 ## Features
 
-- Timer that restores the running entry after a reload
-- Projects with colors, and tags
-- Manual entry editing
-- Filtering by project and tag
-- Reports: today / week / month / custom range
-- Charts by project and by day, plus a calendar heatmap
-- CSV export with BOM (UTF-8, Excel-compatible)
-- CSV / JSON import
-- Dark / light theme switch
-- UI language switch (English / Ukrainian)
+- One-click timer with pause/resume; a running timer survives page reloads
+- Projects with colors, tags, and descriptions editable while the timer runs
+- Manual entry editing, filtering by project and tag, month-by-month list
+- Reports for today / week / month / custom range
+- Charts by project and by day, plus a calendar view
+- Earnings calculator from tracked hours and an hourly rate
+- Export to CSV (Excel-compatible), PNG image and JSON backup; CSV / JSON import
+- Dark and light themes, English and Ukrainian UI
 
-## Install
+## Data stays in your browser
 
-Installs both frontend **and** backend dependencies:
+The live demo has no backend and no account. Everything is saved in your
+browser's `localStorage`, so it never leaves your device — and it is gone if you
+clear site data or switch browsers. Use **Export backup** (in the notice bar or
+in Settings) to keep a JSON copy; import it to restore.
 
-```bash
-npm run setup
-```
+## Run locally
 
-> `better-sqlite3` is a native module; installation pulls a prebuilt binary
-> (prebuild). A separate compile step is usually not required.
-
-## Run
-
-Starts the frontend and backend with a single command (via `concurrently`):
+Locally, Tick runs with a small backend that stores data in a SQLite file.
 
 ```bash
-npm run dev
+npm run setup   # installs frontend and backend dependencies
+npm run dev     # web app on :5173, API on :3001
 ```
 
-- Web app: `http://localhost:5173`
-- Data service (API): `http://localhost:3001`
+- Data file: `server/data/tracker.db` — created on first run, ignored by git
+- `PORT` sets the backend port; `VITE_API_URL` points the frontend elsewhere
+- `npm run build:pages` builds the browser-only version served on GitHub Pages
+- After cloning, run `git config core.hooksPath .githooks` to enable the repo's git hooks
 
-You can also run the processes separately:
+## Tech stack
 
-```bash
-npm run dev:web      # Vite only
-npm run dev:server   # backend only
-```
+- **Frontend:** React 18, TypeScript, Vite 5, Zustand, Tailwind CSS, Recharts, Zod
+- **Backend:** Express 4, TypeScript (`tsx`), better-sqlite3, Zod
+- **Hosting:** GitHub Pages via GitHub Actions
 
-The backend port is set via the `PORT` variable (default `3001`); the base URL
-for the frontend is set via `VITE_API_URL` (create a `.env.local`).
+## License
 
-## Where the data lives
-
-```
-server/data/tracker.db
-```
-
-The SQLite file is created automatically on the backend's first run. The
-`server/data/` folder is in `.gitignore`, so data never lands in the repository.
-
-For backups, use **↓ CSV** in the reports view or copy the `tracker.db` file.
-
-## Migration from the old version
-
-If your data used to live in the browser (`localStorage`, key `chronos-v1`), it
-is migrated automatically on the first launch against an empty backend — no
-prompt. The old copy in the browser is left untouched as a safety net.
-
-## Security
-
-- A CSP meta tag blocks external scripts and `eval`
-- Zod validation on both the frontend and the backend
-- Export is protected against CSV injection
-- CORS is restricted to localhost origins
-- Import limits on file size and entry count
-
-## Reference
-
-`tracker.html` — the original prototype (vanilla HTML/CSS/JS), kept for
-comparison.
-
----
-
-This repo enforces English-only content via git hooks in `.githooks/`; run `git config core.hooksPath .githooks` once after cloning.
+[MIT](LICENSE) © 2026 Yurii
