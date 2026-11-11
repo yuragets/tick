@@ -145,7 +145,7 @@ const en = {
   welcomeText: 'Start a timer, sort work into projects and tags, and see where the hours went in reports and a calendar.',
   welcomePrivacy: 'No account, no server — everything is saved in this browser.',
   welcomeDemo: 'Load demo data',
-  welcomeDemoHint: 'A week of sample entries in 3 projects. Remove them with one click.',
+  welcomeDemoHint: 'A few months of sample entries in 5 projects. Remove them with one click.',
   welcomeFresh: 'Start from scratch',
   welcomeImport: 'or import a backup',
   demoBanner: 'You are looking at demo data.',
