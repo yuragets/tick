@@ -6,7 +6,12 @@ A simple time tracker that's free, needs no sign-up, keeps your data in your own
 
 ![Tick: month calendar and the details of one day](media/demo.gif)
 
-<!-- Full demo video (media/demo.mp4): drag it into the GitHub editor here -->
+<details>
+<summary>▶ Watch the full demo (38s)</summary>
+
+https://github.com/user-attachments/assets/c309114b-24a3-4176-b73e-98b26e41999b
+
+</details>
 
 ## Why
 
