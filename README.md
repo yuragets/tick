@@ -28,6 +28,8 @@ In the live demo everything is stored in your browser (`localStorage`) and never
 
 ## Run locally
 
+Requires Node.js 20+.
+
 ```bash
 npm run setup   # install everything (once)
 npm run dev     # start Tick
