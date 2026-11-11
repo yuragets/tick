@@ -138,6 +138,7 @@ export default function EntryEditModal() {
             <label className="block text-xs mb-1" style={{ color: 'var(--ink-mute)' }}>{t('start_')}</label>
             <input
               type="datetime-local"
+              step="1"
               value={startStr}
               onChange={e => changeStart(e.target.value)}
               className="w-full px-3 py-2 rounded-[10px] text-sm"
@@ -148,6 +149,7 @@ export default function EntryEditModal() {
             <label className="block text-xs mb-1" style={{ color: 'var(--ink-mute)' }}>{t('end_')}</label>
             <input
               type="datetime-local"
+              step="1"
               value={endStr}
               onChange={e => changeEnd(e.target.value)}
               className="w-full px-3 py-2 rounded-[10px] text-sm"

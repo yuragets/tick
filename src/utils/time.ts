@@ -51,7 +51,7 @@ export function applyTimeOfDay(baseMs: number, hhmm: string): number | null {
 
 export function dtLocal(ms: number): string {
   const d = new Date(ms - new Date().getTimezoneOffset() * 60_000)
-  return d.toISOString().slice(0, 16)
+  return d.toISOString().slice(0, 19)
 }
 
 export function parseDatetimeLocal(s: string): number {
