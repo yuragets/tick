@@ -2,7 +2,7 @@ import { useStore } from '../store/useStore'
 import { useT } from '../i18n'
 import type { Lang } from '../types'
 import Modal from './Modal'
-import { BackupActions } from './LocalMode'
+import { BackupActions, DataManagement } from './LocalMode'
 import { LOCAL_MODE } from '../config'
 
 interface Props {
@@ -78,6 +78,7 @@ export default function SettingsModal({ onClose }: Props) {
               {t('dataSectionHint')}
             </span>
             <BackupActions />
+            <DataManagement onCleared={onClose} />
           </div>
         )}
 

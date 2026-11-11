@@ -153,6 +153,10 @@ const en = {
   dismiss: 'Dismiss',
   dataSection: 'Data',
   dataSectionHint: 'Stored only in this browser',
+  clearAll: 'Clear all data',
+  clearAllTitle: 'Delete all data in this browser?',
+  clearAllText: 'All projects, entries and settings stored here will be deleted. This can’t be undone — export a backup first if you might need them.',
+  clearAllConfirm: 'Delete everything',
 
   // Time units
   unitHour: 'h',

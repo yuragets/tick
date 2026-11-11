@@ -59,8 +59,10 @@ interface StoreState extends AppData {
 
   // First run / demo data (local mode)
   loadDemo: () => void
+  addDemo: () => void
   startFresh: () => void
   removeDemo: () => void
+  clearAll: () => Promise<void>
 }
 
 export const useStore = create<StoreState>((set, get) => {
@@ -319,6 +321,17 @@ export const useStore = create<StoreState>((set, get) => {
       void persist()
     },
 
+    addDemo() {
+      // Appends demo data to whatever the user already has.
+      const demo = buildDemoData()
+      const { projects, entries } = get()
+      set({
+        projects: [...projects, ...demo.projects],
+        entries: [...entries, ...demo.entries].sort((a, b) => b.start - a.start),
+      })
+      void persist()
+    },
+
     startFresh() {
       set({
         projects: [DEFAULT_PROJECT],
@@ -347,6 +360,28 @@ export const useStore = create<StoreState>((set, get) => {
         activeProjectId: isDemoId(activeProjectId) ? fallback : activeProjectId,
       })
       void persist()
+    },
+
+    async clearAll() {
+      // Wipes stored data and returns to the first-visit welcome screen;
+      // nothing is saved again until the user picks a start.
+      try {
+        await adapter.clear()
+      } catch (e) {
+        console.error('[store] Clear failed:', e)
+        set({ saveError: true })
+        return
+      }
+      set({
+        projects: [DEFAULT_PROJECT],
+        entries: [],
+        running: null,
+        // Keep the UI language so the welcome screen doesn't switch on the user.
+        settings: { ...DEFAULT_SETTINGS, lang: get().settings.lang },
+        activeProjectId: DEFAULT_PROJECT.id,
+        saveError: false,
+        firstRun: true,
+      })
     },
   }
 })

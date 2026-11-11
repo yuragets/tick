@@ -56,22 +56,29 @@ function Feedback({ msg }: { msg: { ok: boolean; text: string } | null }) {
   )
 }
 
+function ExportBackupButton() {
+  const { projects, entries, running, settings } = useStore()
+  const { t } = useT()
+  return (
+    <button
+      onClick={() => exportJSON({ projects, entries, running, settings })}
+      className="text-sm"
+      style={linkBtn}
+    >
+      {t('exportBackup')}
+    </button>
+  )
+}
+
 /** Export-backup + import links, with inline import feedback. */
 export function BackupActions() {
-  const { projects, entries, running, settings } = useStore()
   const { t } = useT()
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null)
 
   return (
     <div>
       <div className="flex items-center gap-4">
-        <button
-          onClick={() => exportJSON({ projects, entries, running, settings })}
-          className="text-sm"
-          style={linkBtn}
-        >
-          {t('exportBackup')}
-        </button>
+        <ExportBackupButton />
         <ImportLabel onMessage={setMsg}>{t('import')}</ImportLabel>
       </div>
       <Feedback msg={msg} />
@@ -126,9 +133,12 @@ export function Welcome() {
   )
 }
 
+const useHasDemo = () =>
+  useStore(s => s.projects.some(p => isDemoId(p.id)) || s.entries.some(e => isDemoId(e.id)))
+
 /** Shown while any demo project or entry is present. */
 export function DemoBanner() {
-  const hasDemo = useStore(s => s.projects.some(p => isDemoId(p.id)) || s.entries.some(e => isDemoId(e.id)))
+  const hasDemo = useHasDemo()
   const removeDemo = useStore(s => s.removeDemo)
   const { t } = useT()
   const { confirm, isArmed } = useConfirm()
@@ -149,6 +159,97 @@ export function DemoBanner() {
       </button>
     </div>
   )
+}
+
+const pillBtn: CSSProperties = {
+  background: 'var(--panel-2)', borderColor: 'var(--line-strong)', color: 'var(--ink)',
+}
+const dangerBtn: CSSProperties = {
+  background: 'var(--danger-bg)', borderColor: 'var(--danger)', color: 'var(--danger)',
+}
+
+/** Settings → Data: add/remove demo data and wipe everything. */
+export function DataManagement({ onCleared }: { onCleared: () => void }) {
+  const { addDemo, removeDemo, clearAll } = useStore()
+  const hasDemo = useHasDemo()
+  const { t } = useT()
+  const { confirm, isArmed } = useConfirm()
+  const [confirmingClear, setConfirmingClear] = useState(false)
+
+  async function handleClear() {
+    await clearAll()
+    resetStorageNotice()
+    onCleared()
+  }
+
+  if (confirmingClear) {
+    return (
+      <div
+        className="rounded-[10px] p-3 mt-3"
+        style={{ background: 'var(--danger-bg)', border: '1px solid var(--danger)' }}
+      >
+        <div className="text-sm font-semibold mb-1" style={{ color: 'var(--danger)' }}>
+          {t('clearAllTitle')}
+        </div>
+        <p className="text-xs mb-3" style={{ color: 'var(--ink-dim)' }}>
+          {t('clearAllText')}
+        </p>
+        <div className="mb-3">
+          <ExportBackupButton />
+        </div>
+        <div className="flex justify-end gap-2 flex-wrap">
+          <button
+            onClick={() => setConfirmingClear(false)}
+            className="px-3 py-1.5 text-sm rounded-[10px] border"
+            style={pillBtn}
+          >
+            {t('cancel')}
+          </button>
+          <button
+            onClick={() => void handleClear()}
+            className="px-3 py-1.5 text-sm font-medium rounded-[10px] border"
+            style={{ background: 'var(--danger)', borderColor: 'var(--danger)', color: 'var(--bg)' }}
+          >
+            {t('clearAllConfirm')}
+          </button>
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <div className="flex items-center gap-2 flex-wrap mt-3">
+      {hasDemo ? (
+        <button
+          onClick={() => { if (confirm('demo')) removeDemo() }}
+          className="px-3 py-1.5 text-sm rounded-[10px] border"
+          style={isArmed('demo') ? dangerBtn : pillBtn}
+        >
+          {isArmed('demo') ? t('demoRemoveConfirm') : t('demoRemove')}
+        </button>
+      ) : (
+        <button onClick={addDemo} className="px-3 py-1.5 text-sm rounded-[10px] border" style={pillBtn}>
+          {t('welcomeDemo')}
+        </button>
+      )}
+      <button
+        onClick={() => setConfirmingClear(true)}
+        className="px-3 py-1.5 text-sm rounded-[10px] border"
+        style={dangerBtn}
+      >
+        {t('clearAll')}
+      </button>
+    </div>
+  )
+}
+
+/** After a full wipe the storage notice should show again, as on a first visit. */
+function resetStorageNotice() {
+  try {
+    localStorage.removeItem(NOTICE_DISMISSED_KEY)
+  } catch {
+    /* storage unavailable — nothing to reset */
+  }
 }
 
 function readDismissed(): boolean {
