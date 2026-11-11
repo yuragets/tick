@@ -60,6 +60,11 @@ export default function Timer() {
     if (running) updateRunning({ desc: v.slice(0, MAX_DESC_LEN) })
   }
 
+  function handleTagsChange(v: string[]) {
+    setTags(v)
+    if (running) updateRunning({ tags: v })
+  }
+
   function handleProjChange(id: string) {
     setProjId(id)
     setActiveProject(id)
@@ -124,9 +129,8 @@ export default function Timer() {
       <div className="mb-4">
         <TagInput
           value={tags}
-          onChange={setTags}
+          onChange={handleTagsChange}
           suggestions={tagSuggestions}
-          disabled={!!running}
           placeholder={t('tagsPlaceholder')}
         />
       </div>
