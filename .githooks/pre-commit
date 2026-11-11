@@ -1,27 +1,27 @@
 #!/bin/sh
 #
-# pre-commit hook: block commits that introduce RUSSIAN text.
+# pre-commit hook: checks the language of staged text.
 #
-# English and Ukrainian are allowed; only Russian is rejected. Because the two
-# languages share most of the Cyrillic block, we cannot ban all Cyrillic.
-# Instead we look for signals that are specific to Russian and absent from the
-# Ukrainian alphabet:
+# English and Ukrainian are allowed. Other Cyrillic-script text is rejected,
+# but since it shares most of the Cyrillic block with Ukrainian, we cannot ban
+# all Cyrillic. Instead we look for signals that are absent from the
+# Ukrainian alphabet and vocabulary:
 #   1. the letters ъ ы э ё (Ukrainian uses ' / і / е / є instead), and
-#   2. a curated list of common Russian words that are not valid Ukrainian.
+#   2. a curated list of common words that are not valid Ukrainian.
 # Ukrainian-only letters (і ї є ґ) and Ukrainian words never trigger the hook.
 #
 # Only staged content is scanned (never the working tree or dependencies),
 # and binary files plus common vendored/lock paths are skipped.
 
-# Russian detector, applied to a stream on stdin. Prints matching lines as
+# Language detector, applied to a stream on stdin. Prints matching lines as
 # "<line-number>: <line-content>". `-CSD` decodes stdin as UTF-8 and `-Mutf8`
 # decodes this script's own Cyrillic literals, so both sides are compared as
 # Unicode code points rather than raw bytes.
 scan() {
 	perl -CSD -Mutf8 -ne '
-		# 1. Letters that exist in Russian but not in the Ukrainian alphabet.
+		# 1. Cyrillic letters that are not in the Ukrainian alphabet.
 		if (/[ъыэёЪЫЭЁ]/) { print "    line $.: $_"; next }
-		# 2. Characteristic Russian words, matched as whole Cyrillic tokens
+		# 2. Characteristic non-Ukrainian words, matched as whole Cyrillic tokens
 		#    (case-insensitive). Each is chosen so it is NOT a valid Ukrainian
 		#    word, and the lookarounds keep Ukrainian words that merely contain
 		#    these letters from matching.
@@ -40,7 +40,7 @@ while IFS= read -r file; do
 	[ -n "$file" ] || continue
 	# Skip dependency, virtualenv and lock files; the Ukrainian localisation
 	# files (legitimately full of Cyrillic); and this hook itself (it must
-	# contain Russian sample words/letters in order to detect them).
+	# contain the sample words/letters in order to detect them).
 	case "$file" in
 	node_modules/* | */node_modules/*) continue ;;
 	.venv/* | */.venv/*) continue ;;
@@ -61,8 +61,8 @@ while IFS= read -r file; do
 	matches=$(git show ":$file" 2>/dev/null | scan)
 	if [ -n "$matches" ]; then
 		if [ "$found" -eq 0 ]; then
-			echo "Commit blocked: Russian text found in staged files." >&2
-			echo "English and Ukrainian are allowed; Russian is not." >&2
+			echo "Commit blocked: staged files contain text in an unsupported language." >&2
+			echo "Only English and Ukrainian are allowed." >&2
 			echo >&2
 		fi
 		found=1
@@ -75,7 +75,7 @@ EOF
 
 if [ "$found" -ne 0 ]; then
 	echo >&2
-	echo "Remove the Russian text and commit again." >&2
+	echo "Remove that text and commit again." >&2
 	exit 1
 fi
 

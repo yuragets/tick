@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# commit-msg hook: block commit messages that contain Cyrillic characters.
+# commit-msg hook: checks the commit message language (English only).
 #
 # Git passes the path to the file holding the proposed commit message as the
 # first argument. The repository is English-only, so any character in the
