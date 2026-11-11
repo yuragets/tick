@@ -38,12 +38,20 @@ export default function DayDetails({ date, entries, onClose }: Props) {
     const opener = document.activeElement as HTMLElement | null
     const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onCloseRef.current() }
     window.addEventListener('keydown', onKey)
+    // Hiding the scrollbar would widen the page; pad by its width so nothing
+    // shifts. (scrollbar-gutter can't do this: the visible bar comes from
+    // ::-webkit-scrollbar while the native one is overlay, so no gutter is
+    // reserved.) Overlay scrollbars measure 0 → no padding on phones.
+    const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth
     const prevOverflow = document.body.style.overflow
+    const prevPadding = document.body.style.paddingRight
     document.body.style.overflow = 'hidden'
+    if (scrollbarWidth > 0) document.body.style.paddingRight = `${scrollbarWidth}px`
     closeRef.current?.focus()
     return () => {
       window.removeEventListener('keydown', onKey)
       document.body.style.overflow = prevOverflow
+      document.body.style.paddingRight = prevPadding
       opener?.focus?.()
     }
   }, [])
