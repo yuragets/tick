@@ -4,9 +4,9 @@ import { AppDataSchema } from '../schemas'
 import { STORAGE_KEY } from '../utils/constants'
 
 /**
- * Browser localStorage implementation. Kept in the codebase as a fallback /
- * reference and as the source for the one-time migration to the backend.
- * No longer the default adapter — see createStorageAdapter().
+ * Browser localStorage implementation. Used by static builds
+ * (VITE_STORAGE=local — see createStorageAdapter()) and as the source for
+ * the one-time migration to the backend.
  */
 export class LocalStorageAdapter implements StorageAdapter {
   async load(): Promise<AppData | null> {
@@ -14,12 +14,9 @@ export class LocalStorageAdapter implements StorageAdapter {
   }
 
   async save(data: AppData): Promise<void> {
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(data))
-    } catch (e) {
-      // localStorage may be full or unavailable
-      console.error('[storage] Save failed:', e)
-    }
+    // Throws if localStorage is full or unavailable — the store surfaces
+    // that via `saveError`.
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(data))
   }
 
   async clear(): Promise<void> {
